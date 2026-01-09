@@ -9,8 +9,48 @@ name: Auto Release
     branches: [main]
 
 jobs:
+  lint:
+    name: Lint add-on configuration
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Home Assistant Add-on Lint
+        uses: frenck/action-addon-linter@v2
+        with:
+          path: "."
+
+  build:
+    name: Build add-on
+    needs: lint
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [aarch64, amd64]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get information
+        id: info
+        uses: home-assistant/actions/helpers/info@master
+        with:
+          path: "."
+
+      - name: Build ${{ matrix.arch }} add-on
+        uses: home-assistant/builder@master
+        with:
+          args: |
+            --test \
+            --${{ matrix.arch }} \
+            --target /data
+
   auto-release:
     name: Create automatic release
+    needs: build
     if: github.event_name == 'push' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
