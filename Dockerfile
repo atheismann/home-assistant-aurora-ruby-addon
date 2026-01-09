@@ -9,7 +9,6 @@ RUN apk add --no-cache \
     ruby \
     ruby-dev \
     ruby-bundler \
-    ruby-json \
     build-base \
     linux-headers \
     git \
