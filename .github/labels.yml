@@ -1,0 +1,12 @@
+name: PR Labels
+description: Add version bump labels to pull requests
+labels:
+  - name: patch
+    description: Patch version bump (bug fixes)
+    color: "d4c5f9"
+  - name: minor
+    description: Minor version bump (new features)
+    color: "fbca04"
+  - name: major
+    description: Major version bump (breaking changes)
+    color: "d93f0b"

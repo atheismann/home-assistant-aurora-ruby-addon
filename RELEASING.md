@@ -1,14 +1,63 @@
 # Release Process
 
-This add-on uses semantic versioning and GitHub releases.
+This add-on uses semantic versioning and automated releases.
 
-## Creating a New Release
+## Automated Releases (Recommended)
 
-### 1. Update Version
+Releases are **automatically created** when changes are pushed to main (via PR merge or direct push).
 
-Update the version in both config files:
+### Via Pull Request (Recommended)
+
+Add a label to your PR to control version bumping:
+- **`major`** - Breaking changes (X.0.0) - e.g., v1.0.0 → v2.0.0
+- **`minor`** - New features (0.X.0) - e.g., v1.2.0 → v1.3.0
+- **No label or `patch`** - Bug fixes (0.0.X) - e.g., v1.2.3 → v1.2.4
+
+**Workflow:**
+1. Create a PR with your changes
+2. Add appropriate label (`major`, `minor`, or leave as patch)
+3. Merge the PR to main
+4. Automation handles the rest
+
+### Via Direct Push to Main
+
+If pushing directly to main, use commit message prefixes:
+- **`[major]`** or **`BREAKING CHANGE:`** - Major version bump
+- **`[minor]`** or **`feat:`** or **`feature:`** - Minor version bump
+- **Anything else** - Patch version bump
+
+**Examples:**
+```bash
+git commit -m "feat: add network connection support"  # Minor bump
+git commit -m "fix: resolve gem installation error"   # Patch bump
+git commit -m "[major] remove deprecated architectures" # Major bump
+```
+
+### Skip Release
+
+To push changes without triggering a release, include `[skip release]` or `[skip ci]` in your commit message:
+```bash
+git commit -m "docs: update README [skip release]"
+```
+
+### What Happens Automatically
+
+When code is pushed to main:
+- Calculates new version based on labels/commit message
+- Updates `config.yaml` and `config.json`
+- Updates `CHANGELOG.md` with change info
+- Commits changes with `[skip ci]`
+- Creates GitHub release with tag
+- Triggers Docker image build
+
+## Manual Releases (Alternative)
+
+If you prefer manual control, you can still create releases manually.
+
+### 1. Update Version Manually
+
+Edit both config files:
 - `config.yaml` - Update `version: "X.Y.Z"`
-- `config.json` - Update `"version": "X.Y.Z"`
 
 ### 2. Update Changelog
 
@@ -33,10 +82,12 @@ Add release notes to `CHANGELOG.md`:
 ### 3. Commit Changes
 
 ```bash
-git add config.yaml config.json CHANGELOG.md
-git commit -m "Bump version to X.Y.Z"
+git add config.yaml CHANGELOG.md
+git commit -m "Bump version to X.Y.Z [skip release]"
 git push origin main
 ```
+
+Note: Use `[skip release]` to prevent auto-release from also running.
 
 ### 4. Create GitHub Release
 

@@ -123,9 +123,14 @@ web_aid_tool_port: 0
 
 ## Releases
 
-This add-on follows [semantic versioning](https://semver.org/). See [RELEASING.md](RELEASING.md) for the release process.
+This add-on follows [semantic versioning](https://semver.org/) with **automated releases**.
 
-To install a specific version, you can reference the version in the add-on configuration or pull a specific tagged Docker image.
+When a PR is merged to main, a new version is automatically:
+- Calculated based on PR labels (`major`, `minor`, or `patch`)
+- Tagged and released on GitHub
+- Built and published to GitHub Container Registry
+
+See [RELEASING.md](RELEASING.md) for details on the release process.
 
 ## Home Assistant Integration
 

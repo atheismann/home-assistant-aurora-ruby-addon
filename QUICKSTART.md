@@ -13,11 +13,8 @@ aurora-ruby-addon/
 │       └── build.yml          # GitHub Actions build workflow
 ├── .gitignore                 # Git ignore rules
 ├── build.json                 # Multi-architecture build config
-├── build.sh                   # Local build script
 ├── CHANGELOG.md               # Version history
-├── config.json                # Add-on configuration (JSON format)
-├── config.yaml                # Add-on configuration (YAML format)
-├── docker-compose.yml         # Docker Compose for local testing
+├── config.yaml                # Add-on configuration
 ├── Dockerfile                 # Container image definition
 ├── DOCS.md                    # Add-on store documentation
 ├── ICON_INFO.md              # Icon setup instructions
@@ -32,9 +29,10 @@ aurora-ruby-addon/
 
 ### 1. Testing Locally
 
+Build and test the add-on locally:
 ```bash
 cd /Users/atheismann/dev/home-automation/aurora-ruby-addon
-./build.sh
+docker build -t local/waterfurnace-aurora .
 ```
 
 ### 2. Publishing to GitHub
@@ -60,9 +58,8 @@ git push -u origin main
 ### 4. Configuration Required
 
 Before using, you need to:
-- Update `repository.yaml` with your GitHub username and info
-- Update `config.json` image URL with your GitHub username
-- Optionally add icon.png and logo.png files
+- Update `repository.yaml` with your GitHub username and info (already done)
+- Optionally add icon.png and logo.png files for the add-on store
 
 ## Key Features
 
