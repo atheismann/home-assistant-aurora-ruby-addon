@@ -10,8 +10,6 @@ arch:
 init: false
 hassio_api: true
 auth_api: true
-auto_update: true
-watchdog: "tcp://[HOST]:[PORT:1883]"
 options:
   connection_type: serial
   serial_port: /dev/ttyUSB0
