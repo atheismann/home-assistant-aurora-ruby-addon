@@ -45,4 +45,5 @@ jobs:
           args: |
             --test \
             --${{ matrix.arch }} \
-            --target /data
+            --target /data \
+            --image waterfurnace-aurora-{arch}
