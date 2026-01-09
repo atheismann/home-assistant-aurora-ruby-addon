@@ -79,15 +79,21 @@ fi
 
 bashio::log.info "Starting: ${CMD}"
 
+# Disable Ruby output buffering for real-time logs
+export RUBYOPT="-W0"
+
 # Function to process log lines and ensure proper formatting for Home Assistant
 process_logs() {
     while IFS= read -r line; do
+        # Skip empty lines
+        [ -z "$line" ] && continue
+        
         # Check log level indicators in the output
-        if echo "$line" | grep -qiE '^\s*(ERROR|FATAL)'; then
+        if echo "$line" | grep -qiE '(ERROR|FATAL|error:|failed)'; then
             bashio::log.error "$line"
-        elif echo "$line" | grep -qiE '^\s*(WARN|WARNING)'; then
+        elif echo "$line" | grep -qiE '(WARN|WARNING|warn:)'; then
             bashio::log.warning "$line"
-        elif echo "$line" | grep -qiE '^\s*(DEBUG)'; then
+        elif echo "$line" | grep -qiE '(DEBUG|debug:)'; then
             bashio::log.debug "$line"
         else
             # Default to info level for all other output
@@ -96,11 +102,32 @@ process_logs() {
     done
 }
 
-# Run the bridge and pipe all output through log processor
-# This ensures all stdout/stderr is captured at info level or higher
-$CMD 2>&1 | process_logs
+bashio::log.info "Launching Aurora MQTT Bridge..."
 
-# If the bridge exits, log it and exit with the same code
-EXIT_CODE=${PIPESTATUS[0]}
+# Check if the command exists
+if ! command -v aurora_mqtt_bridge &> /dev/null; then
+    bashio::log.error "aurora_mqtt_bridge command not found! Check gem installation."
+    exit 1
+fi
+
+# Run the bridge with unbuffered output and pipe through log processor
+# stdbuf -oL forces line-buffered output, -eL for stderr
+stdbuf -oL -eL $CMD 2>&1 | process_logs &
+BRIDGE_PID=$!
+
+# Wait a moment to see if it starts successfully
+sleep 2
+
+# Check if process is still running
+if kill -0 $BRIDGE_PID 2>/dev/null; then
+    bashio::log.info "Bridge process started successfully (PID: ${BRIDGE_PID})"
+    # Wait for the process to complete
+    wait $BRIDGE_PID
+    EXIT_CODE=$?
+else
+    EXIT_CODE=1
+    bashio::log.error "Bridge process failed to start or exited immediately"
+fi
+
 bashio::log.warning "Aurora MQTT Bridge exited with code ${EXIT_CODE}"
 exit $EXIT_CODE
