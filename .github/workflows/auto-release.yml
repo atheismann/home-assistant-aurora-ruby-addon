@@ -6,16 +6,11 @@ name: Auto Release
     workflows: ["Build Add-on"]
     types: [completed]
     branches: [main]
-  push:
-    branches: [main]
 
 jobs:
   auto-release:
     name: Create automatic release
-    if: |
-      (github.event_name == 'workflow_run' && 
-       github.event.workflow_run.conclusion == 'success') ||
-      github.event_name == 'push'
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -25,10 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: |
-            ${{ github.event_name == 'workflow_run' && 
-                github.event.workflow_run.head_branch || 
-                github.ref }}
+          ref: ${{ github.event.workflow_run.head_branch }}
           fetch-depth: 0
 
       - name: Check if skip release
@@ -129,9 +121,7 @@ jobs:
           body: |
             ## Changes
 
-            ${{ github.event_name == 'workflow_run' &&
-              github.event.workflow_run.head_commit.message ||
-              github.event.head_commit.message }}
+            ${{ github.event.workflow_run.head_commit.message }}
 
             **Full Changelog**:
             https://github.com/${{ github.repository }}/compare/\
