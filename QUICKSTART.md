@@ -6,7 +6,7 @@ A complete Home Assistant add-on that integrates WaterFurnace Aurora heat pump s
 
 ## File Structure
 
-```
+```text
 aurora-ruby-addon/
 ├── .github/
 │   └── workflows/
@@ -30,6 +30,7 @@ aurora-ruby-addon/
 ### 1. Testing Locally
 
 Build and test the add-on locally:
+
 ```bash
 cd /Users/atheismann/dev/home-automation/aurora-ruby-addon
 docker build -t local/waterfurnace-aurora .
@@ -58,6 +59,7 @@ git push -u origin main
 ### 4. Configuration Required
 
 Before using, you need to:
+
 - Update `repository.yaml` with your GitHub username and info (already done)
 - Optionally add icon.png and logo.png files for the add-on store
 
@@ -71,21 +73,21 @@ Before using, you need to:
 ✅ **Web AID Tool**: Optional web interface for diagnostics
 ✅ **ModBus Pass-Through**: Direct register access via MQTT
 
-## Requirements
+## 📋 Requirements
 
-**Hardware:**
+### Hardware
+
 - USB RS-485 adapter (NOT MAX485-based) **OR** Waveshare network RS-485 adapter
 - Custom RJ45 cable (see INSTALL.md for wiring)
 - WaterFurnace heat pump with AID Tool port
 
-**Software:**
+### Software
+
 - Home Assistant Mosquitto MQTT broker add-on (or another MQTT broker)
   - **Important**: This add-on does NOT include its own MQTT server
-  - Install \"Mosquitto broker\" from the Home Assistant add-on store if you don't have it
-  - This add-on does NOT include its own MQTT server
   - Install "Mosquitto broker" from the Home Assistant add-on store if you don't have it
 
-## Documentation
+## 📚 Documentation
 
 - **README.md**: Overview and features
 - **INSTALL.md**: Step-by-step installation guide
@@ -94,10 +96,10 @@ Before using, you need to:
 - **DOCS.md**: Add-on store documentation
 - **config.yaml**: Configuration options
 
-## Support
+## 🆘 Support
 
-- Upstream library: https://github.com/ccutrer/waterfurnace_aurora
-- Home Assistant: https://www.home-assistant.io/
+- Upstream library: <https://github.com/ccutrer/waterfurnace_aurora>
+- Home Assistant: <https://www.home-assistant.io/>
 
 ## Credits
 

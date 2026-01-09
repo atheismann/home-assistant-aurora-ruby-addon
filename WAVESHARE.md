@@ -14,29 +14,37 @@ The Waveshare RS232/485_TO_WIFI_ETH_(B) is a network-based RS-485 adapter that a
 
 Create the same cable as described in INSTALL.md:
 
-**RJ45 to Terminal Wiring:**
-- Pins 1+3 (white-orange + white-green) → A+ terminal on Waveshare
-- Pins 2+4 (orange + blue) → B- terminal on Waveshare
-- **DO NOT connect** pins 5-8 (24VAC power wires)
+## Cable Wiring
 
-Plug the RJ45 end into the AID Tool port on your heat pump.
+Your heat pump uses a standard ethernet cable for the RS-485 connection:
+
+- Pins 1+3 (white-orange + white-green) → A+ terminal on Waveshare
+- Pins 2+6 (orange + green)             → B- terminal on Waveshare
+
+Alternatively (TIA-568-B standard):
+
+- Pins 1+2 (white-orange + orange)     → A+ terminal on Waveshare
+- Pins 3+6 (white-green + green)       → B- terminal on Waveshare
 
 ### 2. Configure the Waveshare Device
 
 The Waveshare device needs to be configured for RS-485 communication with the correct serial parameters.
 
-#### Connection to Waveshare:
+#### Connection to Waveshare
+
 1. Connect the Waveshare device to your network via Ethernet
 2. Power it on (it can be powered via USB or the included power adapter)
 3. Find its IP address (check your router's DHCP client list or use the manufacturer's tool)
 
-#### Web Interface Configuration:
+#### Web Interface Configuration
+
 1. Open a web browser and navigate to the device's IP address
 2. Login (default username/password is usually `admin`/`admin`)
 3. Configure the serial port settings:
 
 **Required Serial Parameters:**
-```
+
+```text
 Baud Rate: 19200
 Data Bits: 8
 Parity: EVEN
@@ -45,28 +53,30 @@ Flow Control: None
 ```
 
 **Network Settings:**
-```
+
+```text
 Protocol: TCP Server or TCP Client (TCP Server recommended)
 Port: 2000 (or your choice)
 ```
 
 **Operating Mode:**
+
 - Select "RS-485" mode (NOT RS-232)
 
-4. Save the configuration and reboot the device
+1. Save the configuration and reboot the device
 
 #### Alternative: Telnet/RFC2217 Mode
 
 If the device supports RFC2217 protocol, you can use telnet mode which allows the serial parameters to be set automatically:
 
-```
+```text
 Protocol: RFC2217 (Telnet)
 Port: 2217 (or your choice)
 ```
 
 ## Add-on Configuration
 
-### For TCP Connection:
+### For TCP Connection
 
 ```yaml
 connection_type: network
@@ -82,7 +92,7 @@ mqtt_ssl: false
 web_aid_tool_port: 0
 ```
 
-### For Telnet/RFC2217 Connection:
+### For Telnet/RFC2217 Connection
 
 ```yaml
 connection_type: network
@@ -102,7 +112,7 @@ web_aid_tool_port: 0
 
 After starting the add-on, check the logs. You should see:
 
-```
+```text
 [INFO] Starting WaterFurnace Aurora MQTT Bridge...
 [INFO] Connection: Network (tcp://192.168.1.100:2000/)
 [INFO] MQTT Host: core-mosquitto:1883
@@ -115,11 +125,13 @@ After starting the add-on, check the logs. You should see:
 ### Cannot Connect to Device
 
 1. **Verify IP address**: Ping the device to ensure it's reachable
+
    ```bash
    ping 192.168.1.100
    ```
 
 2. **Check port**: Use telnet to verify the port is open
+
    ```bash
    telnet 192.168.1.100 2000
    ```

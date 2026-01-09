@@ -27,13 +27,15 @@
 
 You need to create a custom cable to connect your RS-485 adapter to the heat pump:
 
-### Materials Needed:
+### Materials Needed
+
 - 1x RJ45 connector or existing ethernet cable
 - CAT5/CAT6 cable
 - Crimping tool (if making from scratch)
 
-### Wiring (TIA-568-B):
-```
+### Wiring (TIA-568-B)
+
+```text
 RJ45 Pin | Wire Color        | RS-485 Terminal
 ---------|-------------------|----------------
 1        | White-Orange      | A+ (positive)
@@ -47,13 +49,15 @@ RJ45 Pin | Wire Color        | RS-485 Terminal
 ```
 
 **Instructions**:
+
 1. Take an ethernet cable and cut off one end (or crimp a new RJ45 connector)
 2. Strip the other end and identify the wires
 3. Twist together pins 1+3 (white-orange + white-green) → RS-485 A+
 4. Twist together pins 2+4 (orange + blue) → RS-485 B-
 5. **IMPORTANT**: Isolate the other wires (pins 5-8). DO NOT connect them to anything!
 
-### Connection:
+### Connection
+
 1. Plug RJ45 end into the **AID Tool** port on your heat pump
 2. **For USB adapter**: Connect the A+/B- wires to your RS-485 adapter terminals, then plug USB adapter into your Home Assistant host
 3. **For network adapter**: Connect the A+/B- wires to your Waveshare or similar device terminals (see [WAVESHARE.md](WAVESHARE.md) for detailed setup)
@@ -78,7 +82,7 @@ RJ45 Pin | Wire Color        | RS-485 Terminal
 1. Go to the **Configuration** tab
 2. Set your parameters based on your connection type:
 
-### For USB/Serial Connection:
+### For USB/Serial Connection
 
 ```yaml
 connection_type: serial
@@ -94,7 +98,7 @@ mqtt_ssl: false
 web_aid_tool_port: 0        # Set to 4567 to enable web interface
 ```
 
-### For Network Connection (Waveshare):
+### For Network Connection (Waveshare)
 
 ```yaml
 connection_type: network
@@ -122,6 +126,7 @@ If you're not sure which serial port to use:
 4. Update the configuration with the correct device path
 
 Common serial ports:
+
 - `/dev/ttyUSB0` - Most USB adapters
 - `/dev/ttyUSB1` - Second USB adapter
 - `/dev/ttyAMA0` - Raspberry Pi GPIO UART
@@ -135,8 +140,9 @@ Common serial ports:
 4. Click **Start**
 5. Check the **Log** tab for any errors
 
-### Expected Log Output (Serial):
-```
+### Expected Log Output (Serial)
+
+```text
 [INFO] Starting WaterFurnace Aurora MQTT Bridge...
 [INFO] Connection: Serial (/dev/ttyUSB0)
 [INFO] MQTT Host: core-mosquitto:1883
@@ -144,8 +150,9 @@ Common serial ports:
 [INFO] Starting: aurora_mqtt_bridge /dev/ttyUSB0 mqtt://core-mosquitto:1883/
 ```
 
-### Expected Log Output (Network):
-```
+### Expected Log Output (Network)
+
+```text
 [INFO] Starting WaterFurnace Aurora MQTT Bridge...
 [INFO] Connection: Network (tcp://192.168.1.100:2000/)
 [INFO] MQTT Host: core-mosquitto:1883
@@ -160,9 +167,10 @@ Common serial ports:
 3. You should see a "WaterFurnace" or "Aurora" device
 4. Click on it to see all available entities
 
-### Available Entities:
+### Available Entities
 
 Depending on your heat pump model, you may see:
+
 - **Climate**: Thermostat control, setpoints, mode
 - **Sensors**: Temperatures (air, water, ambient)
 - **Sensors**: Power usage (total, compressor, blower, pump)
@@ -185,33 +193,39 @@ Or for more advanced layouts, see the examples in README.md.
 ## Troubleshooting
 
 ### "Serial port does not exist" (Serial Mode Only)
+
 - Check USB connection
 - Verify device path in configuration
 - Check add-on logs for available devices
 - Try different USB ports
 
 ### "Network connection type selected but network_host is empty" (Network Mode)
+
 - Ensure you've entered the IP address in the `network_host` field
 - Verify the Waveshare device is powered on and connected to your network
 
 ### Cannot Connect to Network Device
+
 - Ping the device: `ping <network_host>`
 - Verify the port is open: `telnet <network_host> <network_port>`
 - Check Waveshare device configuration (see [WAVESHARE.md](WAVESHARE.md))
 - Ensure serial parameters are correct: 19200 baud, EVEN parity
 
 ### "Connection refused" or MQTT errors
+
 - Verify MQTT broker is running
 - Check MQTT credentials
 - Ensure MQTT discovery is enabled in configuration.yaml
 
 ### No data appearing
+
 - Check add-on logs for errors
 - Verify cable wiring (A+ and B- correct)
 - Ensure cable is plugged into AID Tool port (not thermostat port)
 - Try reversing A+ and B- connections
 
 ### Entities not discovered
+
 - Wait 1-2 minutes after startup
 - Restart Home Assistant
 - Check MQTT integration is installed and configured

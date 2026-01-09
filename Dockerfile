@@ -1,5 +1,6 @@
-ARG BUILD_FROM
-FROM $BUILD_FROM
+# Build arguments (BUILD_FROM is provided by Home Assistant build system)
+ARG BUILD_FROM=alpine:3.19
+FROM ${BUILD_FROM}
 
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

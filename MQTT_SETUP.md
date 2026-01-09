@@ -2,7 +2,7 @@
 
 ## Understanding the Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                  Home Assistant                          │
 │                                                          │
@@ -44,6 +44,7 @@
 ### ✅ Then: WaterFurnace Aurora Add-on
 
 **This add-on (the one you're setting up now):**
+
 - Connects to your heat pump via RS-485
 - Publishes data TO the Mosquitto broker
 - Does NOT create its own MQTT server
@@ -78,32 +79,36 @@ mqtt_password: "your-mqtt-password"
 ## Common Misconceptions
 
 ❌ **"I need to install a separate MQTT server"**
+
 - No! The Mosquitto add-on IS your MQTT server
 
 ❌ **"This add-on includes an MQTT broker"**
+
 - No! This add-on is a client that connects to Mosquitto
 
 ❌ **"I need to configure complex MQTT settings"**
+
 - No! Default settings work for 99% of users
 
 ## Verification
 
-### Check if Mosquitto is running:
+### Check if Mosquitto is running
 
 1. Go to Settings → Add-ons
 2. Look for "Mosquitto broker"
 3. Status should show "Running"
 
-### Check if WaterFurnace is connecting:
+### Check if WaterFurnace is connecting
 
 1. Start the WaterFurnace Aurora add-on
 2. Check the logs - you should see:
-   ```
+
+   ```text
    [INFO] MQTT Host: core-mosquitto:1883
    [INFO] Starting: aurora_mqtt_bridge ...
    ```
 
-### Check if data is flowing:
+### Check if data is flowing
 
 1. Go to Settings → Devices & Services
 2. Look for MQTT integration
@@ -115,7 +120,8 @@ mqtt_password: "your-mqtt-password"
 
 **Problem**: Mosquitto add-on is not running
 
-**Solution**: 
+**Solution**:
+
 1. Go to Settings → Add-ons → Mosquitto broker
 2. Click Start
 
@@ -124,6 +130,7 @@ mqtt_password: "your-mqtt-password"
 **Problem**: Mosquitto requires authentication but credentials not provided
 
 **Solution**: Either:
+
 - Disable authentication in Mosquitto config, OR
 - Add username/password to WaterFurnace Aurora config
 
@@ -132,6 +139,7 @@ mqtt_password: "your-mqtt-password"
 **Problem**: MQTT discovery not enabled
 
 **Solution**: Check that MQTT integration is set up in Home Assistant:
+
 1. Go to Settings → Devices & Services
 2. Look for MQTT integration
 3. Ensure discovery is enabled (it is by default)

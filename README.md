@@ -14,12 +14,14 @@ This add-on connects directly to your WaterFurnace Aurora-based heat pump system
 
 ### Connection Options
 
-**Option 1: USB RS-485 Adapter (Direct)**
+#### Option 1: USB RS-485 Adapter (Direct)
+
 - USB to RS-485 adapter (such as [this one](https://www.amazon.com/dp/B07B416CPK) or [this one](https://www.amazon.com/dp/B081MB6PN2))
 - **Note**: Adapters based on the MAX485 chip are NOT supported
 - Custom cable to connect to the AID Tool port on your heat pump
 
-**Option 2: Network RS-485 Adapter (Ethernet/WiFi)**
+#### Option 2: Network RS-485 Adapter (Ethernet/WiFi)
+
 - Waveshare RS232/485_TO_WIFI_ETH_(B) or similar network RS-485 adapter
 - Allows connection over your local network instead of USB
 - See [WAVESHARE.md](WAVESHARE.md) for detailed setup instructions
@@ -39,51 +41,67 @@ Connect the RJ45 end to the **AID Tool** port on your heat pump, and the USB RS-
 ## Configuration
 
 ### connection_type (required)
+
 The type of connection to use:
+
 - `serial` - Direct USB RS-485 adapter
 - `network` - Network-based RS-485 adapter (Waveshare or similar)
 
 ### serial_port (required for serial mode)
+
 The serial port device path for your RS-485 adapter. Common values:
+
 - `/dev/ttyUSB0` (most USB adapters)
 - `/dev/ttyAMA0` (Raspberry Pi GPIO)
 - `/dev/ttyACM0` (some USB adapters)
 
 ### network_host (required for network mode)
+
 The IP address or hostname of your network RS-485 adapter (e.g., `192.168.1.100`).
 
 ### network_port (required for network mode)
+
 The TCP/Telnet port configured on your network adapter. Default is `2000`.
 
 ### network_protocol (required for network mode)
+
 The protocol to use:
+
 - `tcp` - Standard TCP connection (recommended)
 - `telnet` - RFC2217 telnet connection (for automatic serial parameter configuration)
 
 ### mqtt_host (required)
+
 The hostname of your MQTT broker:
+
 - Use `core-mosquitto` for the official Home Assistant Mosquitto add-on (recommended)
 - Use `homeassistant.local` or your HA IP if using a different MQTT setup
 - This add-on does NOT create its own broker - it connects to your existing one
 
 ### mqtt_port (required)
+
 The MQTT broker port. Default is `1883` (or `8883` for SSL).
 
 ### mqtt_username (optional)
+
 Username for MQTT authentication (if required).
 
 ### mqtt_password (optional)
+
 Password for MQTT authentication (if required).
 
 ### mqtt_ssl (optional)
+
 Enable SSL/TLS for MQTT connection. Default is `false`.
 
 ### web_aid_tool_port (optional)
+
 Port number to enable the web-based AID tool interface. Set to `0` to disable. If enabled, you can access the web interface at `http://homeassistant.local:PORT/`.
 
 ## Example Configuration
 
-### USB Serial Connection:
+### USB Serial Connection
+
 ```yaml
 connection_type: serial
 serial_port: /dev/ttyUSB0
@@ -98,7 +116,8 @@ mqtt_ssl: false
 web_aid_tool_port: 4567
 ```
 
-### Network Connection (Waveshare):
+### Network Connection (Waveshare)
+
 ```yaml
 connection_type: network
 serial_port: /dev/ttyUSB0  # Ignored in network mode
@@ -126,6 +145,7 @@ web_aid_tool_port: 0
 This add-on follows [semantic versioning](https://semver.org/) with **automated releases**.
 
 When a PR is merged to main, a new version is automatically:
+
 - Calculated based on PR labels (`major`, `minor`, or `patch`)
 - Tagged and released on GitHub
 - Built and published to GitHub Container Registry
@@ -145,6 +165,7 @@ Once the add-on is running, all WaterFurnace entities will automatically appear 
 ## Supported Equipment
 
 This add-on has been tested with:
+
 - WaterFurnace 7 Series with IntelliZone 2
 - WaterFurnace 5 Series
 - GeoSmart systems
@@ -153,15 +174,18 @@ This add-on has been tested with:
 ## Troubleshooting
 
 ### Serial Port Not Found
+
 Check the add-on logs for available serial devices. You may need to adjust the `serial_port` configuration to match your adapter.
 
 ### No Data in Home Assistant
+
 1. Verify your MQTT broker is running and accessible
 2. Check that MQTT discovery is enabled in Home Assistant
 3. Review the add-on logs for connection errors
 4. Ensure your cable is properly connected to the AID Tool port
 
 ### Connection Failures
+
 - Verify the RS-485 wiring is correct (A+ and B-)
 - Ensure your adapter is NOT based on the MAX485 chip
 - Check that no other software is accessing the serial port
@@ -169,13 +193,15 @@ Check the add-on logs for available serial devices. You may need to adjust the `
 ## Advanced Usage
 
 ### ModBus Pass Through
+
 You can query or write individual registers via MQTT. Send a register number to the `$modbus` topic:
 
-```
+```text
 745-747 => homie/aurora-<serialno>/$modbus
 ```
 
 ### Web AID Tool
+
 If enabled, the web-based AID tool provides a graphical interface to view and control your heat pump directly from a web browser.
 
 ## Support

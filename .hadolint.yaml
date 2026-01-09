@@ -1,0 +1,4 @@
+---
+ignored:
+  # BUILD_FROM is provided by Home Assistant
+  - DL3006

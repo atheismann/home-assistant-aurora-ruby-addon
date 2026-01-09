@@ -1,6 +1,7 @@
+---
 name: Build Add-on
 
-on:
+'on':
   push:
     branches:
       - main
@@ -15,7 +16,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Run Home Assistant Add-on Lint
         uses: frenck/action-addon-linter@v2
         with:

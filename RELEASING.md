@@ -9,11 +9,13 @@ Releases are **automatically created** when changes are pushed to main (via PR m
 ### Via Pull Request (Recommended)
 
 Add a label to your PR to control version bumping:
+
 - **`major`** - Breaking changes (X.0.0) - e.g., v1.0.0 → v2.0.0
 - **`minor`** - New features (0.X.0) - e.g., v1.2.0 → v1.3.0
 - **No label or `patch`** - Bug fixes (0.0.X) - e.g., v1.2.3 → v1.2.4
 
 **Workflow:**
+
 1. Create a PR with your changes
 2. Add appropriate label (`major`, `minor`, or leave as patch)
 3. Merge the PR to main
@@ -22,11 +24,13 @@ Add a label to your PR to control version bumping:
 ### Via Direct Push to Main
 
 If pushing directly to main, use commit message prefixes:
+
 - **`[major]`** or **`BREAKING CHANGE:`** - Major version bump
 - **`[minor]`** or **`feat:`** or **`feature:`** - Minor version bump
 - **Anything else** - Patch version bump
 
 **Examples:**
+
 ```bash
 git commit -m "feat: add network connection support"  # Minor bump
 git commit -m "fix: resolve gem installation error"   # Patch bump
@@ -36,6 +40,7 @@ git commit -m "[major] remove deprecated architectures" # Major bump
 ### Skip Release
 
 To push changes without triggering a release, include `[skip release]` or `[skip ci]` in your commit message:
+
 ```bash
 git commit -m "docs: update README [skip release]"
 ```
@@ -43,6 +48,7 @@ git commit -m "docs: update README [skip release]"
 ### What Happens Automatically
 
 When code is pushed to main:
+
 - Calculates new version based on labels/commit message
 - Updates `config.yaml` and `config.json`
 - Updates `CHANGELOG.md` with change info
@@ -57,6 +63,7 @@ If you prefer manual control, you can still create releases manually.
 ### 1. Update Version Manually
 
 Edit both config files:
+
 - `config.yaml` - Update `version: "X.Y.Z"`
 
 ### 2. Update Changelog
@@ -91,7 +98,7 @@ Note: Use `[skip release]` to prevent auto-release from also running.
 
 ### 4. Create GitHub Release
 
-1. Go to https://github.com/atheismann/home-assistant-aurora-ruby-addon/releases/new
+1. Go to <https://github.com/atheismann/home-assistant-aurora-ruby-addon/releases/new>
 2. Click "Choose a tag" and create a new tag: `vX.Y.Z` (e.g., `v1.1.0`)
 3. Set release title: `vX.Y.Z`
 4. Copy release notes from CHANGELOG.md into the description
@@ -100,6 +107,7 @@ Note: Use `[skip release]` to prevent auto-release from also running.
 ### 5. Automated Build
 
 Once the release is published:
+
 - GitHub Actions will automatically trigger
 - Docker images will be built for aarch64 and amd64
 - Images will be pushed to GitHub Container Registry as:

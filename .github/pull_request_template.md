@@ -14,6 +14,7 @@
 <!-- Add one of these labels to your PR: `major`, `minor`, or leave empty for `patch` -->
 
 ## Checklist
+
 - [ ] My code follows the style guidelines of this project
 - [ ] I have tested my changes
 - [ ] I have updated the documentation (if needed)
