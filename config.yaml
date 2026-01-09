@@ -22,6 +22,7 @@ options:
   mqtt_password: ""
   mqtt_ssl: false
   web_aid_tool_port: 0
+  log_level: info
 schema:
   connection_type: list(serial|network)
   serial_port: str
@@ -34,6 +35,7 @@ schema:
   mqtt_password: password?
   mqtt_ssl: bool
   web_aid_tool_port: int(0,65535)?
+  log_level: list(trace|debug|info|notice|warning|error|fatal)?
 devices:
   - /dev/ttyUSB0
   - /dev/ttyUSB1

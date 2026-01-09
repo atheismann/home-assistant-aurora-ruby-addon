@@ -98,6 +98,22 @@ Enable SSL/TLS for MQTT connection. Default is `false`.
 
 Port number to enable the web-based AID tool interface. Set to `0` to disable. If enabled, you can access the web interface at `http://homeassistant.local:PORT/`.
 
+### log_level (optional)
+
+Control the verbosity of add-on logs. Default is `info`.
+
+Available levels (from most to least verbose):
+
+- `trace` - Most detailed logging
+- `debug` - Debug information
+- `info` - General information (recommended)
+- `notice` - Notable events
+- `warning` - Warning messages
+- `error` - Error messages only
+- `fatal` - Critical errors only
+
+All application output from the Aurora MQTT bridge is automatically captured and published to Home Assistant logs at the appropriate level.
+
 ## Example Configuration
 
 ### USB Serial Connection
@@ -114,6 +130,7 @@ mqtt_username: ""
 mqtt_password: ""
 mqtt_ssl: false
 web_aid_tool_port: 4567
+log_level: info
 ```
 
 ### Network Connection (Waveshare)
@@ -130,6 +147,7 @@ mqtt_username: ""
 mqtt_password: ""
 mqtt_ssl: false
 web_aid_tool_port: 0
+log_level: info
 ```
 
 ## Installation

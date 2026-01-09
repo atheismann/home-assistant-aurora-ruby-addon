@@ -1,6 +1,11 @@
 #!/usr/bin/with-contenv bashio
 
+# Set log level from configuration
+LOG_LEVEL=$(bashio::config 'log_level')
+bashio::log.level "${LOG_LEVEL}"
+
 bashio::log.info "Starting WaterFurnace Aurora MQTT Bridge..."
+bashio::log.info "Log level set to: ${LOG_LEVEL}"
 
 # Get configuration values
 CONNECTION_TYPE=$(bashio::config 'connection_type')
@@ -56,6 +61,11 @@ fi
 
 bashio::log.info "MQTT Host: ${MQTT_HOST}:${MQTT_PORT}"
 bashio::log.info "MQTT SSL: ${MQTT_SSL}"
+if [ -n "$MQTT_USERNAME" ]; then
+    bashio::log.debug "MQTT Authentication: Enabled (username: ${MQTT_USERNAME})"
+else
+    bashio::log.debug "MQTT Authentication: Disabled"
+fi
 
 # Build command
 CMD="aurora_mqtt_bridge ${CONNECTION_URI} ${MQTT_URI}"
@@ -69,5 +79,28 @@ fi
 
 bashio::log.info "Starting: ${CMD}"
 
-# Run the bridge
-exec $CMD
+# Function to process log lines and ensure proper formatting for Home Assistant
+process_logs() {
+    while IFS= read -r line; do
+        # Check log level indicators in the output
+        if echo "$line" | grep -qiE '^\s*(ERROR|FATAL)'; then
+            bashio::log.error "$line"
+        elif echo "$line" | grep -qiE '^\s*(WARN|WARNING)'; then
+            bashio::log.warning "$line"
+        elif echo "$line" | grep -qiE '^\s*(DEBUG)'; then
+            bashio::log.debug "$line"
+        else
+            # Default to info level for all other output
+            bashio::log.info "$line"
+        fi
+    done
+}
+
+# Run the bridge and pipe all output through log processor
+# This ensures all stdout/stderr is captured at info level or higher
+$CMD 2>&1 | process_logs
+
+# If the bridge exits, log it and exit with the same code
+EXIT_CODE=${PIPESTATUS[0]}
+bashio::log.warning "Aurora MQTT Bridge exited with code ${EXIT_CODE}"
+exit $EXIT_CODE
