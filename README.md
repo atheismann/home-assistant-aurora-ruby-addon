@@ -121,6 +121,12 @@ web_aid_tool_port: 0
 4. Start the add-on
 5. Check the logs to ensure it's connecting properly
 
+## Releases
+
+This add-on follows [semantic versioning](https://semver.org/). See [RELEASING.md](RELEASING.md) for the release process.
+
+To install a specific version, you can reference the version in the add-on configuration or pull a specific tagged Docker image.
+
 ## Home Assistant Integration
 
 Once the add-on is running, all WaterFurnace entities will automatically appear in Home Assistant through MQTT discovery. You'll see:
