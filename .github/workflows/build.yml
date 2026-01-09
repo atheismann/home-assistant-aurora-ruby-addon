@@ -1,0 +1,31 @@
+name: Build Add-on
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    name: Build add-on
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get information
+        id: info
+        uses: home-assistant/actions/helpers/info@master
+
+      - name: Build add-on
+        uses: home-assistant/builder@master
+        with:
+          args: |
+            --all \
+            --target /data

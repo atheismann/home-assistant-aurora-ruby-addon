@@ -1,0 +1,51 @@
+{
+  "name": "WaterFurnace Aurora",
+  "version": "1.1.0",
+  "slug": "waterfurnace_aurora",
+  "description": "WaterFurnace Aurora MQTT Bridge for Home Assistant",
+  "url": "https://github.com/ccutrer/waterfurnace_aurora",
+  "startup": "application",
+  "boot": "auto",
+  "arch": ["aarch64", "amd64", "armhf", "armv7", "i386"],
+  "uart": true,
+  "hassio_api": true,
+  "homeassistant_api": false,
+  "host_network": false,
+  "privileged": ["SYS_ADMIN"],
+  "apparmor": false,
+  "devices": [
+    "/dev/ttyUSB0",
+    "/dev/ttyUSB1",
+    "/dev/ttyAMA0",
+    "/dev/ttyACM0",
+    "/dev/serial0"
+  ],
+  "services": ["mqtt:need"],
+  "options": {
+    "connection_type": "serial",
+    "serial_port": "/dev/ttyUSB0",
+    "network_host": "",
+    "network_port": 2000,
+    "network_protocol": "tcp",
+    "mqtt_host": "core-mosquitto",
+    "mqtt_port": 1883,
+    "mqtt_username": "",
+    "mqtt_password": "",
+    "mqtt_ssl": false,
+    "web_aid_tool_port": 0
+  },
+  "schema": {
+    "connection_type": "list(serial|network)",
+    "serial_port": "str",
+    "network_host": "str?",
+    "network_port": "port?",
+    "network_protocol": "list(tcp|telnet)?",
+    "mqtt_host": "str",
+    "mqtt_port": "port",
+    "mqtt_username": "str?",
+    "mqtt_password": "password?",
+    "mqtt_ssl": "bool",
+    "web_aid_tool_port": "int(0,65535)?"
+  },
+  "image": "ghcr.io/yourusername/waterfurnace-aurora-{arch}"
+}
