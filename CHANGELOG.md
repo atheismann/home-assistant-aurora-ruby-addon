@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2026-01-09
+
+### Changes
+- fix: add docker-hub parameter to build workflow (by Andrew J Theismann)
+
 ## [1.1.0] - 2026-01-09
 
 ### Added
