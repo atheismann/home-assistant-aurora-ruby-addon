@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-01-09
+
+### Changes
+- Revert "feat: add auto-update and watchdog capabilities" (by Andrew J Theismann)
+
 ## [1.1.3] - 2026-01-09
 
 ### Changes
