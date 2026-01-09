@@ -10,7 +10,6 @@ arch:
 init: false
 hassio_api: true
 auth_api: true
-ingress: false
 options:
   connection_type: serial
   serial_port: /dev/ttyUSB0
@@ -42,6 +41,5 @@ devices:
   - /dev/ttyACM0
   - /dev/serial0
 uart: true
-apparmor: true
 services:
   - mqtt:need
