@@ -13,9 +13,12 @@ RUN apk add --no-cache \
     ruby-bigdecimal \
     ruby-json \
     build-base \
+    linux-headers \
     git \
     bash \
-    jq
+    jq \
+    tzdata \
+    libffi-dev
 
 # Install waterfurnace_aurora gem
 RUN gem install --no-document waterfurnace_aurora
