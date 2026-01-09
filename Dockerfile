@@ -9,8 +9,6 @@ RUN apk add --no-cache \
     ruby \
     ruby-dev \
     ruby-bundler \
-    ruby-io-console \
-    ruby-bigdecimal \
     ruby-json \
     build-base \
     linux-headers \
