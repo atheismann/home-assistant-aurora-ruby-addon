@@ -49,12 +49,14 @@ git commit -m "docs: update README [skip release]"
 
 When code is pushed to main:
 
-- Calculates new version based on labels/commit message
-- Updates `config.yaml` and `config.json`
-- Updates `CHANGELOG.md` with change info
-- Commits changes with `[skip ci]`
-- Creates GitHub release with tag
-- Triggers Docker image build
+1. Build workflow runs (lint and build for all architectures)
+2. If build succeeds, auto-release workflow triggers
+3. Calculates new version based on commit message
+4. Updates `config.yaml` with new version
+5. Updates `CHANGELOG.md` with change info
+6. Commits changes with `[skip ci]`
+7. Creates GitHub release with tag
+8. Release workflow triggers to build and publish Docker images
 
 ## Manual Releases (Alternative)
 

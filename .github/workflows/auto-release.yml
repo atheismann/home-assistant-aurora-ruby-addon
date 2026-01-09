@@ -2,56 +2,15 @@
 name: Auto Release
 
 'on':
-  push:
-    branches: [main]
-  pull_request:
-    types: [closed]
+  workflow_run:
+    workflows: ["Build Add-on"]
+    types: [completed]
     branches: [main]
 
 jobs:
-  lint:
-    name: Lint add-on configuration
-    if: github.event_name == 'push' || github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run Home Assistant Add-on Lint
-        uses: frenck/action-addon-linter@v2
-        with:
-          path: "."
-
-  build:
-    name: Build add-on
-    needs: lint
-    if: github.event_name == 'push' || github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [aarch64, amd64]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Get information
-        id: info
-        uses: home-assistant/actions/helpers/info@master
-        with:
-          path: "."
-
-      - name: Build ${{ matrix.arch }} add-on
-        uses: home-assistant/builder@master
-        with:
-          args: |
-            --test \
-            --${{ matrix.arch }} \
-            --target /data
-
   auto-release:
     name: Create automatic release
-    needs: build
-    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -61,6 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_branch }}
           fetch-depth: 0
 
       - name: Check if skip release
@@ -77,24 +37,13 @@ jobs:
         if: steps.skip.outputs.skip != 'true'
         id: bump
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
-            if echo "$LABELS" | grep -q "major"; then
-              echo "type=major" >> $GITHUB_OUTPUT
-            elif echo "$LABELS" | grep -q "minor"; then
-              echo "type=minor" >> $GITHUB_OUTPUT
-            else
-              echo "type=patch" >> $GITHUB_OUTPUT
-            fi
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if [[ "$COMMIT_MSG" =~ \[major\]|BREAKING\ CHANGE ]]; then
+            echo "type=major" >> $GITHUB_OUTPUT
+          elif [[ "$COMMIT_MSG" =~ \[minor\]|feat:|feature: ]]; then
+            echo "type=minor" >> $GITHUB_OUTPUT
           else
-            COMMIT_MSG=$(git log -1 --pretty=%B)
-            if [[ "$COMMIT_MSG" =~ \[major\]|BREAKING\ CHANGE ]]; then
-              echo "type=major" >> $GITHUB_OUTPUT
-            elif [[ "$COMMIT_MSG" =~ \[minor\]|feat:|feature: ]]; then
-              echo "type=minor" >> $GITHUB_OUTPUT
-            else
-              echo "type=patch" >> $GITHUB_OUTPUT
-            fi
+            echo "type=patch" >> $GITHUB_OUTPUT
           fi
 
       - name: Calculate new version
@@ -130,15 +79,8 @@ jobs:
           DATE=$(date +%Y-%m-%d)
           VERSION="${{ steps.version.outputs.new }}"
 
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            PR_NUM="${{ github.event.pull_request.number }}"
-            PR_USER="${{ github.event.pull_request.user.login }}"
-            PR_TITLE="${{ github.event.pull_request.title }}"
-            CHANGE="- $PR_TITLE (#$PR_NUM by @$PR_USER)"
-          else
-            AUTHOR=$(git log -1 --pretty=%an)
-            CHANGE="- $(git log -1 --pretty=%s) (by $AUTHOR)"
-          fi
+          AUTHOR=$(git log -1 --pretty=%an)
+          CHANGE="- $(git log -1 --pretty=%s) (by $AUTHOR)"
 
           # Create entry
           {
@@ -179,9 +121,7 @@ jobs:
           body: |
             ## Changes
 
-            ${{ github.event_name == 'pull_request' &&
-              github.event.pull_request.title ||
-              github.event.head_commit.message }}
+            ${{ github.event.workflow_run.head_commit.message }}
 
             **Full Changelog**:
             https://github.com/${{ github.repository }}/compare/\
