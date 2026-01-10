@@ -79,8 +79,10 @@ fi
 
 bashio::log.info "Starting: ${CMD}"
 
-# Disable Ruby output buffering for real-time logs
+# Disable Ruby warnings but ensure stdout/stderr are unbuffered for real-time logs
 export RUBYOPT="-W0"
+# Force Ruby to flush output immediately (unbuffered I/O)
+export RUBY_IO_SYNC=1
 
 # Enable detailed ModBus/serial communication logging
 # This logs all bytes sent/received for RS-485 debugging
@@ -132,6 +134,7 @@ process_logs() {
 }
 
 bashio::log.info "Launching Aurora MQTT Bridge..."
+bashio::log.info "Full command: $STRACE_PREFIX $CMD"
 
 # Check if the command exists
 if ! command -v aurora_mqtt_bridge &> /dev/null; then
@@ -139,10 +142,20 @@ if ! command -v aurora_mqtt_bridge &> /dev/null; then
     exit 1
 fi
 
+# Log environment variables that affect output
+bashio::log.debug "Environment: RUBYOPT=${RUBYOPT}, RUBY_IO_SYNC=${RUBY_IO_SYNC}"
+
 # Run the bridge with unbuffered output and pipe through log processor
 # stdbuf -oL forces line-buffered output, -eL for stderr
 # Add strace prefix for serial debugging if enabled
-stdbuf -oL -eL $STRACE_PREFIX $CMD 2>&1 | process_logs &
+# Use exec with explicit 2>&1 to ensure both stdout and stderr are captured
+if [ -n "$STRACE_PREFIX" ]; then
+    bashio::log.info "Running with strace for serial debugging..."
+    exec stdbuf -oL -eL $STRACE_PREFIX $CMD 2>&1 | process_logs &
+else
+    # Run without strace but ensure unbuffered output
+    exec stdbuf -oL -eL sh -c "$CMD 2>&1" | process_logs &
+fi
 BRIDGE_PID=$!
 
 # Wait a moment to see if it starts successfully
