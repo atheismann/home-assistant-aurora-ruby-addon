@@ -12,7 +12,7 @@ The Waveshare RS232/485_TO_WIFI_ETH_(B) is a network-based RS-485 adapter that a
 
 ### 1. Connect the Waveshare Device to Your Heat Pump
 
-Create the same cable as described in INSTALL.md:
+Create the same cable as described in [Hardware Setup](../getting-started/hardware.md):
 
 ## Cable Wiring
 
@@ -55,24 +55,33 @@ The Waveshare device needs to be configured for RS-485 communication with the co
 
 ##### Step 2: Configure Serial Port Settings
 
-Navigate to the **Serial Port** or **COM Settings** section:
+Navigate to the **Serial Port** or **COM Settings** or **UART Settings** section:
 
-**Critical Settings (MUST match exactly):**
+**Data Transfer Mode:**
 
-| Setting       | Value      | Notes                                 |
-|---------------|------------|---------------------------------------|
-| Baud Rate     | **19200**  | This is the Aurora protocol speed     |
-| Data Bits     | **8**      | Standard                              |
-| Parity        | **EVEN**   | Very important! Not None, not Odd     |
-| Stop Bits     | **1**      | Standard                              |
-| Flow Control  | **None**   | No hardware/software flow control     |
-| Interface     | **RS-485** | NOT RS-232 or RS-422                  |
+| Setting              | Value                |
+|----------------------|----------------------|
+| Data Transfer Mode   | **Transparent Mode** |
+| Mode                 | **Transparent Mode** |
+
+**UART Settings (Critical - MUST match exactly):**
+
+| Setting                          | Value      | Notes                                 |
+|----------------------------------|------------|---------------------------------------|
+| Baudrate                         | **19200**  | This is the Aurora protocol speed     |
+| Data Bits                        | **8**      | Standard                              |
+| Parity                           | **Even**   | Very important! Not None, not Odd     |
+| Stop (Stop Bits)                 | **1**      | Standard                              |
+| Baudrate adaptive (RFC2117)      | **Enable** | Allows automatic serial config        |
+| Flow Control                     | **None**   | No hardware/software flow control     |
+| Interface / Working Mode         | **RS-485** | NOT RS-232 or RS-422                  |
 
 **Common mistakes to avoid:**
 
 - ❌ Wrong baud rate (9600, 38400, 115200 won't work)
-- ❌ Using "None" for parity (must be EVEN)
+- ❌ Using "None" for parity (must be EVEN/Even)
 - ❌ Selecting RS-232 instead of RS-485 mode
+- ❌ Wrong data transfer mode (use Transparent, not Modbus or others)
 
 ##### Step 3: Configure Network Settings
 
@@ -126,14 +135,28 @@ To avoid IP address changes:
 
 **For Waveshare RS232/485 TO ETH (B):**
 
-- Look for "Work Mode" → Select "TCP Server"
-- Set "Local Port" → 2000
-- Under "Serial Port" → Select "RS485"
+- Navigate to "Data Transfer Mode" → Select **"Transparent Mode"**
+- Navigate to "UART Settings":
+  - Baudrate → **19200**
+  - Data Bits → **8**
+  - Parity → **Even**
+  - Stop → **1**
+  - Baudrate adaptive (RFC2117) → **Enable**
+- Navigate to "Work Mode" → Select **"TCP Server"**
+- Set "Local Port" → **2000**
+- Under "Serial Port" or "Working Mode" → Select **"RS485"**
 
 **For Waveshare with Web UI v2.x:**
 
+- Navigate to: Setup → Serial Settings
+  - Mode: Transparent Mode
+  - Baudrate: 19200
+  - Data Bits: 8
+  - Parity: Even
+  - Stop Bits: 1
+  - Baudrate adaptive: Enable
 - Navigate to: Setup → Socket Settings
-- Protocol: TCP Server
+  - Protocol: TCP Server
 - Port: 2000
 - Navigate to: Setup → Serial Settings  
 - Configure baud, parity, etc. as above
@@ -482,7 +505,9 @@ After starting the add-on, check the logs. You should see:
 ⚠️ **Critical Configuration Requirements:**
 
 - The Waveshare device must be configured as **TCP Server** (waiting for connections), NOT TCP Client
+- **Data Transfer Mode** must be set to **Transparent Mode** (not Modbus or other modes)
 - Serial parameters must be **exactly**: 19200 baud, 8 data bits, **EVEN parity**, 1 stop bit
+- Enable **Baudrate adaptive (RFC2117)** if available
 - The **parity setting is critical** - using "None" will not work
 - **TCP mode is recommended** over Telnet/RFC2217 for better reliability
 - Keep the device on a **stable network connection** (Ethernet strongly preferred over WiFi)
@@ -504,16 +529,18 @@ After starting the add-on, check the logs. You should see:
 
 **Remember these EXACT values:**
 
-| Parameter     | Value    | Why                          |
-|---------------|----------|------------------------------|
-| Baud Rate     | 19200    | Aurora protocol requirement  |
-| Data Bits     | 8        | Standard byte size           |
-| **Parity**    | **EVEN** | Required by Aurora protocol  |
-| Stop Bits     | 1        | Standard                     |
-| Flow Control  | None     | Not needed for RS-485        |
-| Mode          | RS-485   | Physical layer requirement   |
+| Parameter                   | Value                | Why                                |
+|-----------------------------|----------------------|------------------------------------|
+| Data Transfer Mode          | Transparent Mode     | Passes data without modification   |
+| Baudrate                    | 19200                | Aurora protocol requirement        |
+| Data Bits                   | 8                    | Standard byte size                 |
+| **Parity**                  | **Even**             | Required by Aurora protocol        |
+| Stop (Stop Bits)            | 1                    | Standard                           |
+| Baudrate adaptive (RFC2117) | Enable               | Allows automatic configuration     |
+| Flow Control                | None                 | Not needed for RS-485              |
+| Mode / Interface            | RS-485               | Physical layer requirement         |
 
-**Copy these into Waveshare:** `19200 8E1` (shorthand notation)
+**Copy these into Waveshare:** `19200 8E1` (shorthand notation for UART settings)
 
 ## Supported Waveshare Models
 
@@ -735,9 +762,10 @@ sudo lsof -i :2000
 
 ## See Also
 
-- [README.md](README.md) - Add-on overview and basic configuration
-- [INSTALL.md](INSTALL.md) - General installation guide for USB connections
-- [MQTT_SETUP.md](MQTT_SETUP.md) - MQTT broker setup instructions
+- [Basic Configuration](basic.md) - Add-on configuration options
+- [Hardware Setup](../getting-started/hardware.md) - Cable creation and USB connections
+- [MQTT Setup](../getting-started/mqtt-setup.md) - MQTT broker setup instructions
+- [Troubleshooting](../troubleshooting/connection-issues.md) - Connection issues and debugging
 - Waveshare product page and manual for device-specific details
 
 ## Troubleshooting Flowchart
@@ -837,8 +865,10 @@ sudo lsof -i :2000
 
 ## Common Configuration Mistakes
 
-❌ **Wrong:** Baud rate 9600 → ✅ **Correct:** 19200  
-❌ **Wrong:** Parity None → ✅ **Correct:** Parity EVEN  
+❌ **Wrong:** Modbus or other mode → ✅ **Correct:** Transparent Mode  
+❌ **Wrong:** Baud rate 9600 → ✅ **Correct:** Baudrate 19200  
+❌ **Wrong:** Parity None → ✅ **Correct:** Parity Even  
+❌ **Wrong:** Baudrate adaptive disabled → ✅ **Correct:** Baudrate adaptive (RFC2117) Enabled  
 ❌ **Wrong:** TCP Client mode → ✅ **Correct:** TCP Server mode  
 ❌ **Wrong:** RS-232 mode → ✅ **Correct:** RS-485 mode  
 ❌ **Wrong:** Using port 23 (telnet) → ✅ **Correct:** Use port 2000+ (or your choice)  

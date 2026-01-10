@@ -1,106 +1,122 @@
 # WaterFurnace Aurora Add-on - Quick Start
 
-## What You Have
+This is a condensed reference for users already familiar with the add-on. **First-time setup?** See the [full documentation](README.md).
 
-A complete Home Assistant add-on that integrates WaterFurnace Aurora heat pump systems via RS-485 communication.
+## Quick Install
 
-## File Structure
+1. **Add repository**: Settings → Add-ons → Add-on Store → ⋮ → Repositories
+   - Add: `https://github.com/atheismann/home-assistant-aurora-ruby-addon`
+2. **Install add-on**: Find "Aurora MQTT Gateway" and click Install
+3. **Configure**: See examples below
+4. **Start**: Click Start and check logs
 
-```text
-aurora-ruby-addon/
-├── .github/
-│   └── workflows/
-│       └── build.yml          # GitHub Actions build workflow
-├── .gitignore                 # Git ignore rules
-├── build.json                 # Multi-architecture build config
-├── CHANGELOG.md               # Version history
-├── config.yaml                # Add-on configuration
-├── Dockerfile                 # Container image definition
-├── DOCS.md                    # Add-on store documentation
-├── ICON_INFO.md              # Icon setup instructions
-├── INSTALL.md                # Detailed installation guide
-├── LICENSE                   # MIT License
-├── README.md                 # Main documentation
-├── repository.yaml           # Add-on repository metadata
-└── run.sh                    # Add-on startup script
+## Configuration Examples
+
+### USB Serial
+
+```yaml
+connection_type: serial
+serial_port: /dev/ttyUSB0
+mqtt_host: core-mosquitto
+mqtt_port: 1883
+mqtt_username: homeassistant
+mqtt_password: your_password
+log_level: info
 ```
 
-## Next Steps
+### Network (Waveshare)
 
-### 1. Testing Locally
+```yaml
+connection_type: network
+network_host: 192.168.1.100
+network_port: 8899
+network_protocol: tcp
+mqtt_host: core-mosquitto
+mqtt_port: 1883
+mqtt_username: homeassistant
+mqtt_password: your_password
+log_level: info
+```
 
-Build and test the add-on locally:
+## Prerequisites Checklist
+
+- [ ] MQTT broker running (Mosquitto add-on)
+- [ ] MQTT user created with username/password
+- [ ] RS-485 adapter connected (USB or network)
+- [ ] Custom cable created and connected to AID Tool port
+- [ ] For network: Adapter configured (19200 8E1, Transparent mode)
+
+## Common Commands
+
+**Find USB device:**
 
 ```bash
-cd /Users/atheismann/dev/home-automation/aurora-ruby-addon
-docker build -t local/waterfurnace-aurora .
+ls -la /dev/ttyUSB*
 ```
 
-### 2. Publishing to GitHub
+**Test MQTT:**
 
 ```bash
-cd /Users/atheismann/dev/home-automation/aurora-ruby-addon
-git init
-git add .
-git commit -m "Initial commit: WaterFurnace Aurora add-on"
-git branch -M main
-git remote add origin https://github.com/yourusername/aurora-ruby-addon.git
-git push -u origin main
+mosquitto_sub -h core-mosquitto -u homeassistant -P password -t 'homie/aurora/#' -v
 ```
 
-### 3. Installing in Home Assistant
+**Enable debug:**
 
-1. Go to **Settings** → **Add-ons** → **Add-on Store**
-2. Click **⋮** → **Repositories**
-3. Add: `https://github.com/yourusername/aurora-ruby-addon`
-4. Install "WaterFurnace Aurora"
-5. Configure and start
+```yaml
+log_level: debug
+```
 
-### 4. Configuration Required
+## Quick Troubleshooting
 
-Before using, you need to:
+| Problem | Solution | Guide |
+|---------|----------|-------|
+| ModBus timeout | Swap A+/B- wires | [Connection Issues](docs/troubleshooting/connection-issues.md) |
+| No entities | Check MQTT broker running | [MQTT Issues](docs/troubleshooting/mqtt-issues.md) |
+| Device not found | Check `/dev/ttyUSB*` | [Connection Issues](docs/troubleshooting/connection-issues.md) |
+| Auth failed | Check MQTT username/password | [MQTT Configuration](docs/configuration/mqtt.md) |
 
-- Update `repository.yaml` with your GitHub username and info (already done)
-- Optionally add icon.png and logo.png files for the add-on store
+## Full Documentation
+
+**Getting Started:**
+
+- [Prerequisites](docs/getting-started/prerequisites.md)
+- [Hardware Setup](docs/getting-started/hardware.md)
+- [MQTT Setup](docs/getting-started/mqtt-setup.md)
+- [Installation](docs/getting-started/installation.md)
+
+**Configuration:**
+
+- [Basic Configuration](docs/configuration/basic.md)
+- [Network Adapters](docs/configuration/network-adapters.md)
+- [MQTT Configuration](docs/configuration/mqtt.md)
+
+**Troubleshooting:**
+
+- [Connection Issues](docs/troubleshooting/connection-issues.md)
+- [Debug RS-485](docs/troubleshooting/debug-rs485.md)
+- [Logging Guide](docs/troubleshooting/logging.md)
+- [MQTT Issues](docs/troubleshooting/mqtt-issues.md)
 
 ## Key Features
 
-✅ **RS-485 Serial Connection**: Direct USB connection with heat pump
-✅ **Network Connection**: Ethernet/WiFi via Waveshare or similar adapters
-✅ **MQTT Integration**: Publishes to Home Assistant via MQTT
-✅ **Auto-Discovery**: All entities automatically appear in HA
-✅ **Multi-Architecture**: Supports ARM, AMD64, and i386
-✅ **Web AID Tool**: Optional web interface for diagnostics
-✅ **ModBus Pass-Through**: Direct register access via MQTT
+✅ **Serial & Network Support** - USB or Waveshare network adapters  
+✅ **MQTT Auto-Discovery** - Entities appear automatically  
+✅ **40+ Sensors** - Temperatures, power, system status  
+✅ **Web Debug Interface** - Built-in diagnostics tool  
+✅ **Debug Logging** - Packet-level RS-485 debugging  
+✅ **Multi-Architecture** - ARM, AMD64 support
 
-## 📋 Requirements
+## Hardware Requirements
 
-### Hardware
+- **USB adapter**: FTDI-based RS-485 adapter (NOT MAX485)
+- **Network adapter**: Waveshare RS232/485_TO_WIFI_ETH or similar
+- **Cable**: RJ45 to bare wires (pins 1+3→A+, pins 2+4→B-)
+- **Heat pump**: WaterFurnace with AID Tool port
 
-- USB RS-485 adapter (NOT MAX485-based) **OR** Waveshare network RS-485 adapter
-- Custom RJ45 cable (see INSTALL.md for wiring)
-- WaterFurnace heat pump with AID Tool port
+See [Hardware Setup Guide](docs/getting-started/hardware.md) for wiring details.
 
-### Software
+## Support
 
-- Home Assistant Mosquitto MQTT broker add-on (or another MQTT broker)
-  - **Important**: This add-on does NOT include its own MQTT server
-  - Install "Mosquitto broker" from the Home Assistant add-on store if you don't have it
-
-## 📚 Documentation
-
-- **README.md**: Overview and features
-- **INSTALL.md**: Step-by-step installation guide
-- **MQTT_SETUP.md**: MQTT broker setup and troubleshooting
-- **WAVESHARE.md**: Network adapter setup guide
-- **DOCS.md**: Add-on store documentation
-- **config.yaml**: Configuration options
-
-## 🆘 Support
-
-- Upstream library: <https://github.com/ccutrer/waterfurnace_aurora>
-- Home Assistant: <https://www.home-assistant.io/>
-
-## Credits
-
-Based on the excellent waterfurnace_aurora Ruby gem by @ccutrer.
+- **GitHub**: [Issues](https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues) | [Discussions](https://github.com/atheismann/home-assistant-aurora-ruby-addon/discussions)
+- **Community**: [Home Assistant Forum](https://community.home-assistant.io/)
+- **Upstream**: [waterfurnace_aurora gem](https://github.com/ccutrer/waterfurnace_aurora)
