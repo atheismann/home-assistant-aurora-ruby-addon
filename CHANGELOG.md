@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.3] - 2026-01-10
+
+### Changes
+- add logs and troubleshooting (by Andrew J Theismann)
+
 ## [1.2.2] - 2026-01-09
 
 ### Changes
