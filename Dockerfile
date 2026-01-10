@@ -17,7 +17,9 @@ RUN apk add --no-cache \
     jq \
     tzdata \
     libffi-dev \
-    coreutils
+    coreutils \
+    tcpdump \
+    strace
 
 # Install waterfurnace_aurora gem
 RUN gem install --no-document waterfurnace_aurora

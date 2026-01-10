@@ -114,6 +114,25 @@ Available levels (from most to least verbose):
 
 All application output from the Aurora MQTT bridge is automatically captured and published to Home Assistant logs at the appropriate level.
 
+**Debug Mode for RS-485 Communication:**
+
+Setting `log_level: debug` enables detailed communication logging:
+
+- **For Network connections:** Captures all TCP traffic with tcpdump showing raw packets sent/received
+- **For Serial connections:** Traces all read/write operations with system call logging
+- **ModBus protocol:** Logs all ModBus requests and responses with byte-level details
+
+This is extremely useful for troubleshooting communication issues, wiring problems, or timeout errors.
+
+Example debug output:
+
+```text
+[DEBUG] [TCPDUMP] 19:01:12.345678 IP 192.168.1.10.54321 > 192.168.1.100.2000: Flags [P.], seq 1:8, ack 1, win 502, length 7
+[DEBUG] [TCPDUMP] 0x0000:  01 03 00 00 00 02 c4 0b
+[DEBUG] ModBus request: function=03, address=0000, count=2
+[DEBUG] Waiting for response...
+```
+
 ## Example Configuration
 
 ### USB Serial Connection

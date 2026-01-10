@@ -82,6 +82,35 @@ bashio::log.info "Starting: ${CMD}"
 # Disable Ruby output buffering for real-time logs
 export RUBYOPT="-W0"
 
+# Enable detailed ModBus/serial communication logging
+# This logs all bytes sent/received for RS-485 debugging
+if [ "$LOG_LEVEL" = "debug" ] || [ "$LOG_LEVEL" = "trace" ]; then
+    bashio::log.info "Debug mode enabled - logging all RS-485 communication"
+    export MODBUS_DEBUG=1
+    export RMODBUS_DEBUG=1
+fi
+
+# Start tcpdump for network traffic capture if using network mode
+TCPDUMP_PID=""
+if [ "$CONNECTION_TYPE" = "network" ] && [ "$LOG_LEVEL" = "debug" ]; then
+    bashio::log.info "Starting network traffic capture for ${NETWORK_HOST}:${NETWORK_PORT}"
+    # Capture traffic to/from the network adapter in the background
+    tcpdump -i any -nn -X "host ${NETWORK_HOST} and port ${NETWORK_PORT}" 2>&1 | \
+        while IFS= read -r line; do
+            bashio::log.debug "[TCPDUMP] $line"
+        done &
+    TCPDUMP_PID=$!
+    bashio::log.info "Network capture started (PID: ${TCPDUMP_PID})"
+    sleep 1
+fi
+
+# For serial connections, enable strace to log all I/O operations in debug mode
+STRACE_PREFIX=""
+if [ "$CONNECTION_TYPE" = "serial" ] && [ "$LOG_LEVEL" = "debug" ]; then
+    bashio::log.info "Enabling serial I/O tracing for ${SERIAL_PORT}"
+    STRACE_PREFIX="strace -e trace=read,write,ioctl -s 1024 -xx"
+fi
+
 # Function to process log lines and ensure proper formatting for Home Assistant
 process_logs() {
     while IFS= read -r line; do
@@ -112,7 +141,8 @@ fi
 
 # Run the bridge with unbuffered output and pipe through log processor
 # stdbuf -oL forces line-buffered output, -eL for stderr
-stdbuf -oL -eL $CMD 2>&1 | process_logs &
+# Add strace prefix for serial debugging if enabled
+stdbuf -oL -eL $STRACE_PREFIX $CMD 2>&1 | process_logs &
 BRIDGE_PID=$!
 
 # Wait a moment to see if it starts successfully
@@ -127,6 +157,12 @@ if kill -0 $BRIDGE_PID 2>/dev/null; then
 else
     EXIT_CODE=1
     bashio::log.error "Bridge process failed to start or exited immediately"
+fi
+
+# Stop tcpdump if it was started
+if [ -n "$TCPDUMP_PID" ] && kill -0 $TCPDUMP_PID 2>/dev/null; then
+    bashio::log.info "Stopping network capture..."
+    kill $TCPDUMP_PID 2>/dev/null || true
 fi
 
 bashio::log.warning "Aurora MQTT Bridge exited with code ${EXIT_CODE}"
