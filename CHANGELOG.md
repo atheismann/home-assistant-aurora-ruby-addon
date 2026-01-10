@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.4] - 2026-01-10
+
+### Changes
+- add rs-485 troubleshooting logging (by Andrew J Theismann)
+
 ## [1.2.3] - 2026-01-10
 
 ### Changes
