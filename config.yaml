@@ -1,6 +1,6 @@
 ---
 name: WaterFurnace Aurora
-version: "1.2.5"
+version: "1.2.6"
 slug: waterfurnace_aurora
 description: WaterFurnace Aurora MQTT Bridge for Home Assistant
 url: https://github.com/atheismann/home-assistant-aurora-ruby-addon
