@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-01-11
+
+### Changes
+- feat: enable reconnecting during outage (by Andrew J Theismann)
+
 ## [1.2.6] - 2026-01-10
 
 ### Changes
