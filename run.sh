@@ -145,32 +145,66 @@ fi
 # Log environment variables that affect output
 bashio::log.debug "Environment: RUBYOPT=${RUBYOPT}, RUBY_IO_SYNC=${RUBY_IO_SYNC}"
 
-# Run the bridge with unbuffered output and pipe through log processor
-# stdbuf -oL forces line-buffered output, -eL for stderr
-# Add strace prefix for serial debugging if enabled
-# Use exec with explicit 2>&1 to ensure both stdout and stderr are captured
-if [ -n "$STRACE_PREFIX" ]; then
-    bashio::log.info "Running with strace for serial debugging..."
-    exec stdbuf -oL -eL $STRACE_PREFIX $CMD 2>&1 | process_logs &
-else
-    # Run without strace but ensure unbuffered output
-    exec stdbuf -oL -eL sh -c "$CMD 2>&1" | process_logs &
-fi
-BRIDGE_PID=$!
+# Automatic reconnection with exponential backoff
+RETRY_COUNT=0
+MAX_RETRY_DELAY=300  # Maximum 5 minutes between retries
+INITIAL_RETRY_DELAY=5  # Start with 5 seconds
 
-# Wait a moment to see if it starts successfully
-sleep 2
-
-# Check if process is still running
-if kill -0 $BRIDGE_PID 2>/dev/null; then
-    bashio::log.info "Bridge process started successfully (PID: ${BRIDGE_PID})"
-    # Wait for the process to complete
-    wait $BRIDGE_PID
-    EXIT_CODE=$?
-else
-    EXIT_CODE=1
-    bashio::log.error "Bridge process failed to start or exited immediately"
-fi
+while true; do
+    if [ $RETRY_COUNT -gt 0 ]; then
+        # Calculate exponential backoff delay (doubles each time, up to max)
+        RETRY_DELAY=$((INITIAL_RETRY_DELAY * (2 ** (RETRY_COUNT - 1))))
+        if [ $RETRY_DELAY -gt $MAX_RETRY_DELAY ]; then
+            RETRY_DELAY=$MAX_RETRY_DELAY
+        fi
+        
+        bashio::log.warning "Connection lost. Retry attempt #${RETRY_COUNT} in ${RETRY_DELAY} seconds..."
+        sleep $RETRY_DELAY
+    fi
+    
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    
+    bashio::log.info "Starting Aurora MQTT Bridge (attempt #${RETRY_COUNT})..."
+    
+    # Run the bridge with unbuffered output and pipe through log processor
+    # stdbuf -oL forces line-buffered output, -eL for stderr
+    # Add strace prefix for serial debugging if enabled
+    if [ -n "$STRACE_PREFIX" ]; then
+        bashio::log.info "Running with strace for serial debugging..."
+        stdbuf -oL -eL $STRACE_PREFIX $CMD 2>&1 | process_logs &
+    else
+        # Run without strace but ensure unbuffered output
+        stdbuf -oL -eL sh -c "$CMD 2>&1" | process_logs &
+    fi
+    BRIDGE_PID=$!
+    
+    # Wait a moment to see if it starts successfully
+    sleep 2
+    
+    # Check if process is still running
+    if kill -0 $BRIDGE_PID 2>/dev/null; then
+        bashio::log.info "Bridge process started successfully (PID: ${BRIDGE_PID}, attempt #${RETRY_COUNT})"
+        # Reset retry count on successful start
+        RETRY_COUNT=0
+        
+        # Wait for the process to complete
+        wait $BRIDGE_PID
+        EXIT_CODE=$?
+        
+        bashio::log.warning "Aurora MQTT Bridge exited with code ${EXIT_CODE}"
+        
+        # If exit code is 0, it was a clean shutdown - don't retry
+        if [ $EXIT_CODE -eq 0 ]; then
+            bashio::log.info "Clean shutdown detected, exiting..."
+            break
+        fi
+        
+        # Otherwise, will retry after backoff
+        bashio::log.warning "Unexpected exit detected, will attempt to reconnect..."
+    else
+        bashio::log.error "Bridge process failed to start or exited immediately (attempt #${RETRY_COUNT})"
+    fi
+done
 
 # Stop tcpdump if it was started
 if [ -n "$TCPDUMP_PID" ] && kill -0 $TCPDUMP_PID 2>/dev/null; then
@@ -178,5 +212,4 @@ if [ -n "$TCPDUMP_PID" ] && kill -0 $TCPDUMP_PID 2>/dev/null; then
     kill $TCPDUMP_PID 2>/dev/null || true
 fi
 
-bashio::log.warning "Aurora MQTT Bridge exited with code ${EXIT_CODE}"
-exit $EXIT_CODE
+exit ${EXIT_CODE:-1}

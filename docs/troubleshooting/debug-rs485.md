@@ -33,12 +33,14 @@ Go to the Log tab. You'll now see detailed communication logs:
 ### For Network Connections (Waveshare/TCP)
 
 **Network capture starts:**
+
 ```
 [INFO] Starting network traffic capture for 192.168.1.100:2000
 [INFO] Network capture started (PID: 234)
 ```
 
 **Packet-level details:**
+
 ```
 [DEBUG] [TCPDUMP] 19:01:12.345678 IP 192.168.1.10.54321 > 192.168.1.100.2000: Flags [P.], seq 1:8, ack 1, win 502, length 7
 [DEBUG] [TCPDUMP] 0x0000:  4500 002f 1234 4000 4006 abcd c0a8 010a  E../..@.@.......
@@ -47,6 +49,7 @@ Go to the Log tab. You'll now see detailed communication logs:
 ```
 
 **What this shows:**
+
 - Timestamp of each packet
 - Source and destination IP:port
 - Raw hex bytes of the data
@@ -55,11 +58,13 @@ Go to the Log tab. You'll now see detailed communication logs:
 ### For Serial Connections (USB)
 
 **Serial tracing starts:**
+
 ```
 [INFO] Enabling serial I/O tracing for /dev/ttyUSB0
 ```
 
 **System call details:**
+
 ```
 [DEBUG] write(3, "\x01\x03\x00\x00\x00\x02\xc4\x0b", 8) = 8
 [DEBUG] ioctl(3, TCGETS, {B19200 opost isig icanon echo ...}) = 0
@@ -67,6 +72,7 @@ Go to the Log tab. You'll now see detailed communication logs:
 ```
 
 **What this shows:**
+
 - File descriptor (3) for the serial port
 - Exact bytes written to the port
 - Serial port settings (baud rate, flags)
@@ -101,11 +107,13 @@ Go to the Log tab. You'll now see detailed communication logs:
 ### Problem: No Response from Heat Pump
 
 **Look for:**
+
 1. Request being sent (write or outgoing packet)
 2. No corresponding read or incoming packet
 3. Timeout error after 5-10 seconds
 
 **Example:**
+
 ```
 [DEBUG] [TCPDUMP] 19:01:12.345 IP ... > 192.168.1.100.2000: [OUTGOING DATA]
 [DEBUG] [TCPDUMP] 0x0000:  01 03 00 00 00 02 c4 0b
@@ -114,6 +122,7 @@ Go to the Log tab. You'll now see detailed communication logs:
 ```
 
 **This indicates:**
+
 - Request is being sent correctly
 - Heat pump is not responding
 - Check wiring, parity settings, or heat pump power
@@ -121,6 +130,7 @@ Go to the Log tab. You'll now see detailed communication logs:
 ### Problem: Garbled Response
 
 **Look for:**
+
 ```
 [DEBUG] write: 01 03 00 00 00 02 c4 0b (correct request)
 [DEBUG] read: ff ff ff ff ff ff ff ff (garbage data)
@@ -128,6 +138,7 @@ Go to the Log tab. You'll now see detailed communication logs:
 ```
 
 **This indicates:**
+
 - Communication is happening but data is corrupt
 - Wrong serial parameters (baud rate, parity)
 - Electrical noise or poor cable
@@ -135,12 +146,14 @@ Go to the Log tab. You'll now see detailed communication logs:
 ### Problem: Connection Refused
 
 **Look for:**
+
 ```
 [DEBUG] [TCPDUMP] ... > 192.168.1.100.2000: Flags [S]
 [DEBUG] [TCPDUMP] 192.168.1.100.2000 > ...: Flags [R]
 ```
 
 **The "R" flag means RST (connection refused):**
+
 - Waveshare not in TCP Server mode
 - Wrong port number
 - Firewall blocking connection
@@ -150,6 +163,7 @@ Go to the Log tab. You'll now see detailed communication logs:
 ### Check Request Timing
 
 Count the time between request and response:
+
 - **Normal:** < 100ms response time
 - **Slow:** 500ms - 1000ms (marginal connection)
 - **Timeout:** No response after 5-10 seconds
@@ -157,12 +171,14 @@ Count the time between request and response:
 ### Check Data Patterns
 
 **Good ModBus traffic:**
+
 - Regular requests every few seconds
 - Matching responses for each request
 - Valid CRC checksums
 - Consistent byte counts
 
 **Bad ModBus traffic:**
+
 - Requests with no responses
 - Responses with wrong byte counts
 - CRC errors
@@ -171,10 +187,12 @@ Count the time between request and response:
 ### Network Issues
 
 **TCP retransmissions:**
+
 ```
 [DEBUG] [TCPDUMP] ... Flags [P.], seq 1:8, ack 1 (ORIGINAL)
 [DEBUG] [TCPDUMP] ... Flags [P.], seq 1:8, ack 1 (RETRANSMIT)
 ```
+
 - Indicates packet loss
 - Check network quality
 - May need better cable or closer placement
@@ -203,9 +221,11 @@ Debug logging is verbose and can fill logs quickly.
 **When done troubleshooting:**
 
 1. Change configuration back to:
+
    ```yaml
    log_level: info
    ```
+
 2. Restart add-on
 3. Logs will return to normal verbosity
 
@@ -214,12 +234,14 @@ Debug logging is verbose and can fill logs quickly.
 If you need help diagnosing the issue:
 
 **Include:**
+
 1. Full debug logs (especially the first 100-200 lines after startup)
 2. Your configuration (redact passwords)
 3. Hardware details (adapter model, cable type/length)
 4. What you see in the logs (requests with no response? garbage data?)
 
 **What to look for before asking:**
+
 - Are requests being sent? (look for write/outgoing)
 - Are responses received? (look for read/incoming)
 - Is there a pattern to the errors?
@@ -230,10 +252,12 @@ If you need help diagnosing the issue:
 ### Pattern 1: Immediate Timeout (No Traffic)
 
 **Logs show:**
+
 - No tcpdump output at all
 - Or write attempts with immediate errors
 
 **Cause:**
+
 - Network adapter unreachable
 - Serial port doesn't exist
 - Wrong connection URI
@@ -241,11 +265,13 @@ If you need help diagnosing the issue:
 ### Pattern 2: Request Sent, No Response
 
 **Logs show:**
+
 - Outgoing packets visible
 - No incoming packets
 - Timeout after ~10 seconds
 
 **Cause:**
+
 - Wrong wiring (A+/B- swapped or disconnected)
 - Wrong serial parameters (especially parity)
 - Heat pump not powered or wrong port
@@ -253,11 +279,13 @@ If you need help diagnosing the issue:
 ### Pattern 3: Rapid Errors
 
 **Logs show:**
+
 - Many requests/responses
 - But all showing errors
 - CRC failures
 
 **Cause:**
+
 - Baud rate mismatch
 - Electrical interference
 - Poor cable quality
@@ -288,6 +316,7 @@ strace -e trace=read,write,ioctl -s 1024 -xx
 ## Performance Impact
 
 Debug logging has minimal performance impact:
+
 - tcpdump: ~1-2% CPU usage
 - strace: ~5% CPU overhead
 - Logging: Increases log file size significantly

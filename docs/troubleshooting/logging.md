@@ -7,11 +7,13 @@ If you see the initial startup logs but nothing after "Starting: aurora_mqtt_bri
 ### 1. Check if the Bridge is Actually Running
 
 **Via Home Assistant UI:**
+
 - Go to Settings → Add-ons → WaterFurnace Aurora
 - Check if the add-on shows as "Running" (green)
 - Click the "Log" tab and look for any error messages
 
 **Check the full logs:**
+
 ```bash
 # SSH into Home Assistant or use Terminal add-on
 docker logs addon_SLUG_NAME -f
@@ -22,10 +24,12 @@ docker logs addon_SLUG_NAME -f
 The add-on relies on the `waterfurnace_aurora` gem. If it's not installed correctly, you'll see no output.
 
 **Check installation:**
+
 - Look in logs for: "aurora_mqtt_bridge command not found"
 - This means the Docker build failed or the gem didn't install
 
 **Solution:** Rebuild the add-on
+
 1. Settings → Add-ons → WaterFurnace Aurora
 2. Click the three dots menu → "Rebuild"
 3. Wait for rebuild to complete
@@ -36,11 +40,13 @@ The add-on relies on the `waterfurnace_aurora` gem. If it's not installed correc
 The Ruby bridge might be failing to connect silently.
 
 **For Serial Connection:**
+
 - Check that your RS-485 adapter is plugged in
 - Verify the serial port exists: `/dev/ttyUSB0`
 - Look for warning: "Serial port does not exist"
 
 **For Network Connection:**
+
 - Verify you can ping the Waveshare device
 - Check the IP address and port are correct
 - Ensure the device is in TCP Server mode
@@ -50,6 +56,7 @@ The Ruby bridge might be failing to connect silently.
 If MQTT broker is unreachable, the bridge may hang or fail silently.
 
 **Check MQTT Broker:**
+
 ```bash
 # From Home Assistant terminal
 docker ps | grep mosquitto
@@ -57,10 +64,12 @@ docker ps | grep mosquitto
 ```
 
 **Verify MQTT credentials:**
+
 - If using authentication, credentials must be correct
 - Try without authentication first to test
 
 **Test MQTT connectivity:**
+
 ```bash
 # Install mosquitto clients if needed
 apk add mosquitto-clients
@@ -79,6 +88,7 @@ To see more detailed information:
 4. Check logs again
 
 Example config:
+
 ```yaml
 log_level: debug
 ```
@@ -88,6 +98,7 @@ log_level: debug
 To verify the logging mechanism works, you can temporarily modify the command:
 
 **SSH into the container:**
+
 ```bash
 # Find the container ID
 docker ps | grep waterfurnace
@@ -102,6 +113,7 @@ echo "Test message" | while IFS= read -r line; do echo "INFO: $line"; done
 ### 7. Check for Ruby Buffering Issues
 
 Ruby may buffer output. The updated run.sh includes fixes for this:
+
 - Sets `RUBYOPT="-W0"` to disable warnings
 - Uses `stdbuf -oL -eL` to force line buffering
 - Requires `coreutils` package (should be in Dockerfile)
@@ -121,6 +133,7 @@ aurora_mqtt_bridge tcp://192.168.1.100:2000/ mqtt://core-mosquitto:1883/
 ```
 
 You should see output like:
+
 ```
 Connected to heat pump
 Publishing to MQTT...
@@ -130,25 +143,30 @@ Reading data...
 ### 9. Common Error Messages
 
 **"Network connection type selected but network_host is empty"**
+
 - Fill in the network_host field in configuration
 
 **"Serial port /dev/ttyUSB0 does not exist"**
+
 - Check Hardware tab: is the serial adapter listed?
 - Try unplugging and replugging the USB adapter
 - Try a different USB port
 - Check if driver is loaded: `ls -la /dev/tty*`
 
 **"Connection refused"**
+
 - MQTT broker not running or wrong host/port
 - For network mode: Waveshare device unreachable
 
 **"aurora_mqtt_bridge command not found"**
+
 - Gem installation failed
 - Rebuild the add-on
 
 ### 10. Check Recent Changes
 
 If logging worked before but stopped:
+
 - Did you update the add-on?
 - Did you change any configuration?
 - Did you restart Home Assistant?
@@ -187,7 +205,7 @@ If you're still stuck:
    - Any error messages
 
 2. **Check GitHub Issues:**
-   - Search existing issues: https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues
+   - Search existing issues: <https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues>
    - Look for similar problems
 
 3. **Create a new issue:**

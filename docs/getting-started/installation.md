@@ -19,9 +19,11 @@ Before starting, ensure you have completed:
 3. Click the three dots (⋮) in the top right corner
 4. Select **Repositories**
 5. Add this repository URL:
+
    ```
    https://github.com/atheismann/home-assistant-aurora-ruby-addon
    ```
+
 6. The add-on should now appear in your store
 7. Click on **Aurora MQTT Gateway**
 8. Click **Install**
@@ -33,13 +35,17 @@ If the add-on store method doesn't work:
 
 1. SSH into your Home Assistant host
 2. Navigate to the add-ons directory:
+
    ```bash
    cd /addons
    ```
+
 3. Clone the repository:
+
    ```bash
    git clone https://github.com/atheismann/home-assistant-aurora-ruby-addon.git aurora-mqtt-gateway
    ```
+
 4. The add-on should now appear in **Settings** → **Add-ons** → **Local add-ons**
 
 ## Configuration

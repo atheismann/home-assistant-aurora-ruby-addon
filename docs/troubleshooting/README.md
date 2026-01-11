@@ -61,9 +61,11 @@ See **[Connection Issues](connection-issues.md)** for detailed troubleshooting.
    - If not, reconfigure integration
 
 3. **Verify topics are published**:
+
    ```bash
    mosquitto_sub -h core-mosquitto -u homeassistant -P your_password -t 'homie/aurora/#' -v
    ```
+
    - Should see messages
    - If not, add-on isn't publishing
 
@@ -146,6 +148,7 @@ See **[Connection Issues](connection-issues.md)** for detailed troubleshooting.
 3. Common log messages:
 
    **Good**:
+
    ```
    [INFO] Starting Aurora MQTT Gateway...
    [INFO] Connected to MQTT broker
@@ -154,6 +157,7 @@ See **[Connection Issues](connection-issues.md)** for detailed troubleshooting.
    ```
 
    **Bad**:
+
    ```
    [ERROR] Could not open serial port /dev/ttyUSB0
    [ERROR] Connection refused (MQTT)
@@ -227,7 +231,7 @@ Before opening an issue, gather:
 
 ### Opening an Issue
 
-1. Go to: https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues
+1. Go to: <https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues>
 2. Click **New Issue**
 3. Provide:
    - Clear description of problem
@@ -238,8 +242,8 @@ Before opening an issue, gather:
 
 ### Community Help
 
-- **Home Assistant Community**: https://community.home-assistant.io/
-- **GitHub Discussions**: https://github.com/atheismann/home-assistant-aurora-ruby-addon/discussions
+- **Home Assistant Community**: <https://community.home-assistant.io/>
+- **GitHub Discussions**: <https://github.com/atheismann/home-assistant-aurora-ruby-addon/discussions>
 
 ## Related Documentation
 

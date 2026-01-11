@@ -306,7 +306,7 @@ After starting the add-on, check the logs. You should see:
    - Check router DHCP leases
    - Look for device named "Waveshare" or similar MAC address vendor
    - Try default IPs: `192.168.1.200`, `192.168.1.1`, `192.168.0.7`
-   
+
 2. **Connect to WiFi AP mode**:
    - Look for WiFi network named "Waveshare_XXXX"
    - Connect to it (password may be on device label or `12345678`)

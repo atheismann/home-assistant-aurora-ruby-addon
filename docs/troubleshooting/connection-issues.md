@@ -20,9 +20,11 @@ For USB RS-485 adapters connected directly to Home Assistant.
 **Solutions**:
 
 1. **Check device exists**:
+
    ```bash
    ls -la /dev/ttyUSB*
    ```
+
    - Should show device like `/dev/ttyUSB0`
    - If not found, USB adapter not recognized
 
@@ -53,9 +55,11 @@ For USB RS-485 adapters connected directly to Home Assistant.
 **Solutions**:
 
 1. **Check device permissions**:
+
    ```bash
    ls -la /dev/ttyUSB0
    ```
+
    - Should show: `crw-rw---- 1 root dialout`
 
 2. **Add-on should have access**:
@@ -158,9 +162,11 @@ For Waveshare or other network RS-485 adapters.
 **Solutions**:
 
 1. **Verify adapter IP address**:
+
    ```bash
    ping <network_host>
    ```
+
    - Should get responses
    - If not, adapter is unreachable
 
@@ -203,9 +209,11 @@ For Waveshare or other network RS-485 adapters.
    - Try both if unsure
 
 2. **Test with netcat**:
+
    ```bash
    nc <network_host> <network_port>
    ```
+
    - Type some text and press Enter
    - Should see response (may be binary data)
    - Ctrl+C to exit
@@ -413,7 +421,7 @@ If none of the above helps:
    - Adapter model
    - Cable configuration
    - Configuration (redact passwords)
-4. **Open an issue**: https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues
+4. **Open an issue**: <https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues>
 
 See **[Troubleshooting Guide](README.md)** for more help.
 

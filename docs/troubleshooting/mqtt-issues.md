@@ -239,10 +239,12 @@ homie/aurora/$state ready
    - Discovery sometimes needs restart
 
 3. **Clear MQTT discovery cache**:
+
    ```bash
    # In Home Assistant host
    rm -rf /config/.storage/mqtt.config
    ```
+
    - Then restart Home Assistant
 
 ### Entities Show "Unavailable"
@@ -267,9 +269,11 @@ homie/aurora/$state ready
 **If add-on running but entities unavailable**:
 
 1. **Check MQTT messages**:
+
    ```bash
    mosquitto_sub -h core-mosquitto -u homeassistant -P your_password -t 'homie/aurora/#' -v
    ```
+
    - Should see recent messages
    - Check timestamps are current
 
@@ -341,7 +345,7 @@ Should see: `test/topic Hello MQTT`
 
 **MQTT Explorer** is a GUI tool for viewing MQTT topics:
 
-1. Download from: http://mqtt-explorer.com/
+1. Download from: <http://mqtt-explorer.com/>
 2. Install and open
 3. Configure connection:
    - **Host**: Your Home Assistant IP
@@ -366,13 +370,16 @@ Should see: `test/topic Hello MQTT`
 1. Navigate to **Developer Tools** → **Services**
 2. Service: `mqtt.publish`
 3. Service data:
+
    ```yaml
    topic: test/topic
    payload: Hello from HA
    ```
+
 4. Click **Call Service**
 
 5. Subscribe to see message:
+
    ```bash
    mosquitto_sub -h core-mosquitto -u homeassistant -P your_password -t 'test/topic' -v
    ```
@@ -536,7 +543,7 @@ If MQTT issues persist:
    - Ensure all three match
 
 3. **Open an issue**:
-   - https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues
+   - <https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues>
    - Include configuration (redact passwords)
    - Include relevant logs
 

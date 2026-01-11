@@ -236,7 +236,7 @@ mosquitto_pub -h <home-assistant-ip> -u homeassistant -P your_password -t 'test/
 
 MQTT Explorer is a GUI tool for viewing MQTT topics:
 
-1. Download from: http://mqtt-explorer.com/
+1. Download from: <http://mqtt-explorer.com/>
 2. Install and open
 3. Configure connection:
    - **Host**: Your Home Assistant IP
@@ -318,9 +318,11 @@ Possible causes:
    - Should show "Connected"
 
 2. **Verify topics are published**:
+
    ```bash
    mosquitto_sub -h core-mosquitto -u homeassistant -P your_password -t 'homie/aurora/#' -v
    ```
+
    - Should see messages
    - If not, check Aurora add-on logs
 
@@ -376,6 +378,7 @@ To encrypt MQTT communication:
    - Self-signed certificate
 
 2. **Configure Mosquitto**:
+
    ```yaml
    logins:
      - username: homeassistant
@@ -386,6 +389,7 @@ To encrypt MQTT communication:
    ```
 
 3. **Update Aurora add-on**:
+
    ```yaml
    mqtt_host: core-mosquitto
    mqtt_port: 8883  # TLS port
@@ -410,9 +414,9 @@ The Aurora add-on uses `homie/aurora` as the topic prefix. This is currently not
 ## Getting Help
 
 - **Connection issues**: See [Troubleshooting](../troubleshooting/)
-- **Mosquitto docs**: https://mosquitto.org/documentation/
-- **Homie convention**: https://homieiot.github.io/
-- **GitHub issues**: https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues
+- **Mosquitto docs**: <https://mosquitto.org/documentation/>
+- **Homie convention**: <https://homieiot.github.io/>
+- **GitHub issues**: <https://github.com/atheismann/home-assistant-aurora-ruby-addon/issues>
 
 ## Next Steps
 
