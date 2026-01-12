@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-01-12
+
+### Changes
+- bug: fix watchdog config deprecation (by Andrew J Theismann)
+
 ## [1.3.0] - 2026-01-11
 
 ### Changes
