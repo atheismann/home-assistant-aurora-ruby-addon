@@ -43,5 +43,6 @@ devices:
   - /dev/ttyACM0
   - /dev/serial0
 uart: true
+watchdog: 'tcp://[HOST]:[PORT:8099]'
 services:
   - mqtt:need

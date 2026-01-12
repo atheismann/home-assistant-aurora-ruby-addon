@@ -19,7 +19,8 @@ RUN apk add --no-cache \
     libffi-dev \
     coreutils \
     tcpdump \
-    strace
+    strace \
+    netcat-openbsd
 
 # Install waterfurnace_aurora gem
 RUN gem install --no-document waterfurnace_aurora

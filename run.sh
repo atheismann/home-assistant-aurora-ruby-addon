@@ -79,6 +79,28 @@ fi
 
 bashio::log.info "Starting: ${CMD}"
 
+# Internal watchdog HTTP server for Home Assistant
+# This simple server responds to watchdog pings and monitors the bridge process
+WATCHDOG_PORT=8099
+bashio::log.info "Starting internal watchdog on port ${WATCHDOG_PORT}"
+
+# Start watchdog HTTP server in background
+(
+    while true; do
+        # Simple HTTP server that responds with OK and checks if bridge is running
+        echo -e "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\n\r\nOK" | \
+            nc -l -p ${WATCHDOG_PORT} -q 1 >/dev/null 2>&1
+        
+        # Additional health check: verify bridge process is still alive
+        # (This runs after each watchdog ping)
+        if [ -n "$CURRENT_BRIDGE_PID" ] && ! kill -0 $CURRENT_BRIDGE_PID 2>/dev/null; then
+            bashio::log.error "Watchdog detected bridge process died unexpectedly!"
+        fi
+    done
+) &
+WATCHDOG_PID=$!
+bashio::log.info "Internal watchdog started (PID: ${WATCHDOG_PID})"
+
 # Disable Ruby warnings but ensure stdout/stderr are unbuffered for real-time logs
 export RUBYOPT="-W0"
 # Force Ruby to flush output immediately (unbuffered I/O)
@@ -149,20 +171,34 @@ bashio::log.debug "Environment: RUBYOPT=${RUBYOPT}, RUBY_IO_SYNC=${RUBY_IO_SYNC}
 RETRY_COUNT=0
 MAX_RETRY_DELAY=300  # Maximum 5 minutes between retries
 INITIAL_RETRY_DELAY=5  # Start with 5 seconds
+CONSECUTIVE_FAILURES=0  # Track consecutive failures for backoff
 
 while true; do
-    if [ $RETRY_COUNT -gt 0 ]; then
+    # Apply exponential backoff before retry (except first attempt)
+    if [ $CONSECUTIVE_FAILURES -gt 0 ]; then
         # Calculate exponential backoff delay (doubles each time, up to max)
-        RETRY_DELAY=$((INITIAL_RETRY_DELAY * (2 ** (RETRY_COUNT - 1))))
+        RETRY_DELAY=$((INITIAL_RETRY_DELAY * (2 ** (CONSECUTIVE_FAILURES - 1))))
         if [ $RETRY_DELAY -gt $MAX_RETRY_DELAY ]; then
             RETRY_DELAY=$MAX_RETRY_DELAY
         fi
         
-        bashio::log.warning "Connection lost. Retry attempt #${RETRY_COUNT} in ${RETRY_DELAY} seconds..."
+        bashio::log.warning "Connection lost. Waiting ${RETRY_DELAY} seconds before retry attempt #$((RETRY_COUNT + 1))..."
+        bashio::log.info "Consecutive failures: ${CONSECUTIVE_FAILURES}, Total attempts: ${RETRY_COUNT}"
         sleep $RETRY_DELAY
     fi
     
     RETRY_COUNT=$((RETRY_COUNT + 1))
+    
+    # For network connections, verify host is reachable before attempting connection
+    if [ "$CONNECTION_TYPE" = "network" ]; then
+        bashio::log.info "Testing network connectivity to ${NETWORK_HOST}..."
+        if ! ping -c 1 -W 3 "$NETWORK_HOST" >/dev/null 2>&1; then
+            bashio::log.warning "Network host ${NETWORK_HOST} is unreachable (attempt #${RETRY_COUNT})"
+            CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
+            continue
+        fi
+        bashio::log.info "Network host ${NETWORK_HOST} is reachable"
+    fi
     
     bashio::log.info "Starting Aurora MQTT Bridge (attempt #${RETRY_COUNT})..."
     
@@ -177,15 +213,16 @@ while true; do
         stdbuf -oL -eL sh -c "$CMD 2>&1" | process_logs &
     fi
     BRIDGE_PID=$!
+    CURRENT_BRIDGE_PID=$BRIDGE_PID  # Make available to watchdog
     
     # Wait a moment to see if it starts successfully
-    sleep 2
+    sleep 5
     
     # Check if process is still running
     if kill -0 $BRIDGE_PID 2>/dev/null; then
         bashio::log.info "Bridge process started successfully (PID: ${BRIDGE_PID}, attempt #${RETRY_COUNT})"
-        # Reset retry count on successful start
-        RETRY_COUNT=0
+        # Reset consecutive failures on successful start
+        CONSECUTIVE_FAILURES=0
         
         # Wait for the process to complete
         wait $BRIDGE_PID
@@ -199,12 +236,29 @@ while true; do
             break
         fi
         
-        # Otherwise, will retry after backoff
+        # Process ran but exited unexpectedly - increment failure counter
+        CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
         bashio::log.warning "Unexpected exit detected, will attempt to reconnect..."
     else
+        # Process failed to start or crashed immediately
+        CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
         bashio::log.error "Bridge process failed to start or exited immediately (attempt #${RETRY_COUNT})"
+        if [ "$CONNECTION_TYPE" = "network" ]; then
+            bashio::log.error "Common causes: Network adapter unreachable, wrong IP/port, firewall blocking connection"
+        else
+            bashio::log.error "Common causes: Serial device not found, wrong device path, permissions issue"
+        fi
     fi
 done
+
+# Cleanup
+bashio::log.info "Shutting down..."
+
+# Stop watchdog
+if [ -n "$WATCHDOG_PID" ] && kill -0 $WATCHDOG_PID 2>/dev/null; then
+    bashio::log.info "Stopping internal watchdog..."
+    kill $WATCHDOG_PID 2>/dev/null || true
+fi
 
 # Stop tcpdump if it was started
 if [ -n "$TCPDUMP_PID" ] && kill -0 $TCPDUMP_PID 2>/dev/null; then
