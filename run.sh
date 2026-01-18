@@ -84,6 +84,9 @@ bashio::log.info "Starting: ${CMD}"
 WATCHDOG_PORT=8099
 bashio::log.info "Starting internal watchdog on port ${WATCHDOG_PORT}"
 
+# Initialize CURRENT_BRIDGE_PID to prevent unbound variable error
+CURRENT_BRIDGE_PID=""
+
 # Start watchdog HTTP server in background
 (
     while true; do
