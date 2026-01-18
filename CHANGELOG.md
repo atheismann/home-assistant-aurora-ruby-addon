@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2026-01-18
+
+### Changes
+- bug: fix CURRENT_BRIDGE_PID unbound variable restart (by Andrew J Theismann)
+
 ## [1.3.1] - 2026-01-12
 
 ### Changes
