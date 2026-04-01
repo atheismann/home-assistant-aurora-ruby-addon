@@ -92,6 +92,17 @@ module Aurora
         end
       end
 
+      # RETRY OVERRIDE: This AWL responds to each ModBus query exactly once per
+      # TCP connection. If the gem retries a timed-out query on the same
+      # connection the controller ignores it, causing a second timeout and
+      # a crash. Setting read_retries=0 on the slave means any timeout
+      # immediately raises, letting the outer run.sh retry loop open a fresh
+      # TCP connection (which the controller will respond to again).
+      #
+      # open_modbus_slave is a class method, so it can't be intercepted via
+      # prepend. Instead we override it directly on ABCClient's singleton class
+      # below (after the module definition).
+
       # Log a clear success banner after the full ABCClient initialization
       # completes. This is the definitive "add-on is up and working" signal —
       # TCP connected, registers read, components detected, ready to poll.
@@ -112,5 +123,18 @@ module Aurora
     end
 
     prepend ComponentDetectionPrefetch
+
+    # Override the class-method open_modbus_slave to set read_retries=0 on
+    # every slave before it is used. This must be done here rather than inside
+    # the prepended module because prepend only affects instance methods.
+    class << self
+      prepend(Module.new do
+        def open_modbus_slave(uri, **kwargs)
+          slave = super
+          slave.read_retries = 0
+          slave
+        end
+      end)
+    end
   end
 end
