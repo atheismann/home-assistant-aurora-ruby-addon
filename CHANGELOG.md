@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2026-04-01
+
+### Changes
+- feat: improve ModBus response handling by discarding stale bytes after TCP connection (by Andrew J Theismann)
+
 ## [1.8.0] - 2026-04-01
 
 ### Changes
