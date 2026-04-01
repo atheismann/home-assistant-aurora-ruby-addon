@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2026-04-01
+
+### Changes
+- feat: override open_modbus_slave to set read_retries=0 for improved error handling (by Andrew J Theismann)
+
 ## [1.5.0] - 2026-04-01
 
 ### Changes
