@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-04-01
+
+### Changes
+- feat: improve logging and process management for Aurora MQTT Bridge (by Andrew J Theismann)
+
 ## [1.4.0] - 2026-04-01
 
 ### Changes
