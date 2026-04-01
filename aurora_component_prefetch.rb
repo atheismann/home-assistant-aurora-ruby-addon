@@ -95,16 +95,19 @@ module Aurora
       # Log a clear success banner after the full ABCClient initialization
       # completes. This is the definitive "add-on is up and working" signal —
       # TCP connected, registers read, components detected, ready to poll.
+      #
+      # NOTE: Aurora.logger is nil here because aurora_mqtt_bridge assigns it
+      # immediately *after* ABCClient.new returns. Use $stdout directly so the
+      # message passes through process_logs and appears in the HA addon logs.
       def initialize(uri)
         super
         detected = COMPONENT_DETECTION_MAP.keys
                                           .select { |name| send(:"#{name}?") }
                                           .map(&:to_s)
-        Aurora.logger&.info(
-          "Aurora ABC client ready: " \
-          "model=#{@model} serial=#{@serial_number} firmware=#{@abc_version} " \
-          "components=[#{detected.join(', ')}]"
-        )
+        $stdout.puts "Aurora ABC client ready: " \
+                     "model=#{@model} serial=#{@serial_number} firmware=#{@abc_version} " \
+                     "components=[#{detected.join(', ')}]"
+        $stdout.flush
       end
     end
 

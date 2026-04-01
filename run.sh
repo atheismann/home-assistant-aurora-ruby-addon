@@ -207,43 +207,42 @@ while true; do
     
     bashio::log.info "Starting Aurora MQTT Bridge (attempt #${RETRY_COUNT})..."
     
-    # Run the bridge with unbuffered output and pipe through log processor
-    # stdbuf -oL forces line-buffered output, -eL for stderr
-    # Add strace prefix for serial debugging if enabled
+    # Launch bridge, capturing the actual process PID via exec so we can track
+    # it reliably for wait/kill. Using 'sh -c "echo \$\$ > pidfile; exec CMD"'
+    # means sh writes its own PID then replaces itself with the bridge process
+    # at that same PID. Without this, $! gives process_logs' PID (last in pipe)
+    # which always exits with code 0, causing a false "clean shutdown" break.
+    BRIDGE_PID_FILE=$(mktemp /tmp/aurora_bridge_pid.XXXXXX)
     if [ -n "$STRACE_PREFIX" ]; then
         bashio::log.info "Running with strace for serial debugging..."
-        stdbuf -oL -eL $STRACE_PREFIX $CMD 2>&1 | process_logs &
+        sh -c "echo \$\$ > '$BRIDGE_PID_FILE'; exec stdbuf -oL -eL $STRACE_PREFIX $CMD 2>&1" | process_logs &
     else
-        # Run without strace but ensure unbuffered output
-        stdbuf -oL -eL sh -c "$CMD 2>&1" | process_logs &
+        sh -c "echo \$\$ > '$BRIDGE_PID_FILE'; exec stdbuf -oL -eL $CMD 2>&1" | process_logs &
     fi
-    BRIDGE_PID=$!
+    # Give sh a moment to write its PID before we read it
+    sleep 0.3
+    BRIDGE_PID=$(cat "$BRIDGE_PID_FILE" 2>/dev/null)
+    rm -f "$BRIDGE_PID_FILE"
     CURRENT_BRIDGE_PID=$BRIDGE_PID  # Make available to watchdog
-    
+
     # Wait a moment to see if it starts successfully
     sleep 5
-    
-    # Check if process is still running
-    if kill -0 $BRIDGE_PID 2>/dev/null; then
+
+    # Check if process is still running after initial grace period
+    if [ -n "$BRIDGE_PID" ] && kill -0 "$BRIDGE_PID" 2>/dev/null; then
         bashio::log.info "Bridge process running (PID: ${BRIDGE_PID}, attempt #${RETRY_COUNT}) - watch for 'Aurora ABC client ready' above"
         # Reset consecutive failures on successful start
         CONSECUTIVE_FAILURES=0
-        
+
         # Wait for the process to complete
-        wait $BRIDGE_PID
+        wait "$BRIDGE_PID"
         EXIT_CODE=$?
-        
-        bashio::log.warning "Aurora MQTT Bridge exited with code ${EXIT_CODE}"
-        
-        # If exit code is 0, it was a clean shutdown - don't retry
-        if [ $EXIT_CODE -eq 0 ]; then
-            bashio::log.info "Clean shutdown detected, exiting..."
-            break
-        fi
-        
-        # Process ran but exited unexpectedly - increment failure counter
+
+        # Always reconnect — HA shuts the container via SIGTERM, not via a
+        # clean ruby exit. Any ruby exit (0 or non-zero) means the bridge
+        # lost its connection and needs to restart.
         CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
-        bashio::log.warning "Unexpected exit detected, will attempt to reconnect..."
+        bashio::log.warning "Aurora MQTT Bridge exited (code ${EXIT_CODE}) - will reconnect..."
     else
         # Process failed to start or crashed immediately
         CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
