@@ -105,7 +105,9 @@ WATCHDOG_PID=$!
 bashio::log.info "Internal watchdog started (PID: ${WATCHDOG_PID})"
 
 # Disable Ruby warnings but ensure stdout/stderr are unbuffered for real-time logs
-export RUBYOPT="-W0"
+# Also auto-require the firmware compatibility patch that works around older Aurora
+# firmware not responding to individual B-protocol register reads during init.
+export RUBYOPT="-W0 -r /aurora_component_prefetch.rb"
 # Force Ruby to flush output immediately (unbuffered I/O)
 export RUBY_IO_SYNC=1
 

@@ -25,8 +25,9 @@ RUN apk add --no-cache \
 # Install waterfurnace_aurora gem
 RUN gem install --no-document waterfurnace_aurora
 
-# Copy run script
+# Copy run script and firmware compatibility patch
 COPY run.sh /
+COPY aurora_component_prefetch.rb /
 RUN chmod a+x /run.sh
 
 # Health check using internal watchdog endpoint
