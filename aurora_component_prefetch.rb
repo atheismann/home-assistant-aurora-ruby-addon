@@ -91,6 +91,21 @@ module Aurora
           super()
         end
       end
+
+      # Log a clear success banner after the full ABCClient initialization
+      # completes. This is the definitive "add-on is up and working" signal —
+      # TCP connected, registers read, components detected, ready to poll.
+      def initialize(uri)
+        super
+        detected = COMPONENT_DETECTION_MAP.keys
+                                          .select { |name| send(:"#{name}?") }
+                                          .map(&:to_s)
+        Aurora.logger&.info(
+          "Aurora ABC client ready: " \
+          "model=#{@model} serial=#{@serial_number} firmware=#{@abc_version} " \
+          "components=[#{detected.join(', ')}]"
+        )
+      end
     end
 
     prepend ComponentDetectionPrefetch

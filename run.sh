@@ -225,7 +225,7 @@ while true; do
     
     # Check if process is still running
     if kill -0 $BRIDGE_PID 2>/dev/null; then
-        bashio::log.info "Bridge process started successfully (PID: ${BRIDGE_PID}, attempt #${RETRY_COUNT})"
+        bashio::log.info "Bridge process running (PID: ${BRIDGE_PID}, attempt #${RETRY_COUNT}) - watch for 'Aurora ABC client ready' above"
         # Reset consecutive failures on successful start
         CONSECUTIVE_FAILURES=0
         
