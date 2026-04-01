@@ -92,26 +92,23 @@ module Aurora
         end
       end
 
-      # RETRY OVERRIDE: This AWL responds to each ModBus query exactly once per
-      # TCP connection. If the gem retries a timed-out query on the same
-      # connection the controller ignores it, causing a second timeout and
-      # a crash. Setting read_retries=0 on the slave means any timeout
-      # immediately raises, letting the outer run.sh retry loop open a fresh
-      # TCP connection (which the controller will respond to again).
+      # Wrap initialize to:
+      #   1. Force read_retries=0 AFTER super (which sets it to 2) so that any
+      #      ModBus timeout immediately raises rather than retrying on the same
+      #      TCP connection. This AWL serves each query exactly once per TCP
+      #      connection — retries on the same connection are ignored, causing a
+      #      second 15s timeout and a crash. With retries=0, any timeout raises
+      #      immediately and run.sh opens a fresh connection for the next attempt.
+      #   2. Log a clear success banner once init completes successfully.
       #
-      # open_modbus_slave is a class method, so it can't be intercepted via
-      # prepend. Instead we override it directly on ABCClient's singleton class
-      # below (after the module definition).
-
-      # Log a clear success banner after the full ABCClient initialization
-      # completes. This is the definitive "add-on is up and working" signal —
-      # TCP connected, registers read, components detected, ready to poll.
-      #
-      # NOTE: Aurora.logger is nil here because aurora_mqtt_bridge assigns it
-      # immediately *after* ABCClient.new returns. Use $stdout directly so the
-      # message passes through process_logs and appears in the HA addon logs.
+      # NOTE: Aurora.logger is nil here (aurora_mqtt_bridge assigns it after
+      # ABCClient.new returns), so we use $stdout directly.
       def initialize(uri)
         super
+        # Must override AFTER super — ABCClient#initialize sets read_retries=2
+        # on @modbus_slave immediately after open_modbus_slave returns.
+        @modbus_slave.read_retries = 0
+
         detected = COMPONENT_DETECTION_MAP.keys
                                           .select { |name| send(:"#{name}?") }
                                           .map(&:to_s)
@@ -123,18 +120,5 @@ module Aurora
     end
 
     prepend ComponentDetectionPrefetch
-
-    # Override the class-method open_modbus_slave to set read_retries=0 on
-    # every slave before it is used. This must be done here rather than inside
-    # the prepended module because prepend only affects instance methods.
-    class << self
-      prepend(Module.new do
-        def open_modbus_slave(uri, **kwargs)
-          slave = super
-          slave.read_retries = 0
-          slave
-        end
-      end)
-    end
   end
 end
