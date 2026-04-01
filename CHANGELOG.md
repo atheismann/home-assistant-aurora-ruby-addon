@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-04-01
+
+### Changes
+- feat: enhance ModBus error handling by overriding query method to close TCP socket on timeout (by Andrew J Theismann)
+
 ## [1.7.0] - 2026-04-01
 
 ### Changes
