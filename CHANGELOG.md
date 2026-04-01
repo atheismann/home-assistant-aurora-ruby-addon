@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-04-01
+
+### Changes
+- feat: enhance logging for ABCClient initialization and bridge process status (by Andrew J Theismann)
+
 ## [1.3.2] - 2026-01-18
 
 ### Changes
