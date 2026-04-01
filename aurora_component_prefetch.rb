@@ -109,6 +109,28 @@ module Aurora
         # on @modbus_slave immediately after open_modbus_slave returns.
         @modbus_slave.read_retries = 0
 
+        # When the AWL stops responding mid-refresh, the ModBusTimeout fires after
+        # read_retry_timeout (15s). The bridge's own catch in MQTTBridge#join logs
+        # "Timeout refreshing ABC; retrying..." and retries on the SAME TCP
+        # connection. The AWL then sends its delayed response ~15s after the
+        # original request — but the bridge reads it as the response to the retry
+        # query. Framing is now 1 cycle behind → "got garbage: Illegal function: N".
+        #
+        # Fix: override query on this specific slave instance to close the TCP
+        # socket immediately on timeout. The bridge's retry then hits a closed
+        # socket, raises IOError (not caught by the ModBusTimeout rescue in
+        # MQTTBridge#join), and the process exits cleanly for run.sh to reconnect.
+        @modbus_slave.define_singleton_method(:query) do |request|
+          super(request)
+        rescue ModBus::Errors::ModBusTimeout
+          begin
+            @io.close unless @io.nil? || @io.closed?
+          rescue StandardError
+            nil
+          end
+          raise
+        end
+
         detected = COMPONENT_DETECTION_MAP.keys
                                           .select { |name| send(:"#{name}?") }
                                           .map(&:to_s)
