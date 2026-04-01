@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2026-04-01
+
+### Changes
+- feat: override ABCClient#initialize to set read_retries=0 for improved ModBus timeout handling (by Andrew J Theismann)
+
 ## [1.6.0] - 2026-04-01
 
 ### Changes
