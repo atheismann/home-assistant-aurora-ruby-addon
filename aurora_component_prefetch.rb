@@ -142,5 +142,39 @@ module Aurora
     end
 
     prepend ComponentDetectionPrefetch
+
+    # When a previous TCP connection is closed mid-transaction (e.g., by our
+    # query timeout handler calling @io.close), the AWL buffers its pending
+    # response and delivers it at the START of the next TCP connection —
+    # before responding to any new query. This shifts all RTU framing by N
+    # bytes, causing the first query on every reconnect to receive a garbled
+    # response (e.g. "IllegalFunction: 0" or a corrupted bootstrap reply).
+    #
+    # Fix: after establishing the TCP connection, wait up to 400ms for any
+    # stale bytes to arrive and discard them before returning the slave.
+    # 400ms is chosen because the AWL typically delivers leftover bytes within
+    # ~270ms of the new TCP handshake; normal connections see no data and the
+    # select returns nil after 400ms with negligible impact on startup time.
+    class << self
+      prepend(Module.new do
+        def open_modbus_slave(uri, **kwargs)
+          slave = super
+          raw_io = slave.instance_variable_get(:@io)
+          if raw_io && !raw_io.closed?
+            begin
+              loop do
+                ready = IO.select([raw_io], nil, nil, 0.4)
+                break unless ready
+                raw_io.read_nonblock(4096)
+              end
+            rescue IO::WaitReadable, IO::EAGAINWaitReadable,
+                   EOFError, Errno::ECONNRESET, IOError
+              nil
+            end
+          end
+          slave
+        end
+      end)
+    end
   end
 end
