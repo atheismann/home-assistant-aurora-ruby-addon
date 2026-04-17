@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-04-17
+
+### Changes
+- feat: enhance MQTT command handling with listener and replay functionality (by Andrew J Theismann)
+
 ## [1.3.2] - 2026-01-18
 
 ### Changes
