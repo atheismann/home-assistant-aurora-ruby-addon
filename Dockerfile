@@ -20,7 +20,8 @@ RUN apk add --no-cache \
     coreutils \
     tcpdump \
     strace \
-    netcat-openbsd
+    netcat-openbsd \
+    mosquitto-clients
 
 # Install waterfurnace_aurora gem
 RUN gem install --no-document waterfurnace_aurora

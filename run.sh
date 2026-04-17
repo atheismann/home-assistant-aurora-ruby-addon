@@ -20,6 +20,16 @@ MQTT_PASSWORD=$(bashio::config 'mqtt_password')
 MQTT_SSL=$(bashio::config 'mqtt_ssl')
 WEB_AID_TOOL_PORT=$(bashio::config 'web_aid_tool_port')
 
+# State directory for MQTT command tracking and crash-recovery replay.
+# Lives in tmpfs; intentionally cleared on container restart.
+STATE_DIR="/tmp/aurora_mqtt_state"
+mkdir -p "$STATE_DIR"
+
+# Shared mosquitto CLI connection args (listener + replay both use these).
+MQTT_CLI_ARGS="-h ${MQTT_HOST} -p ${MQTT_PORT}"
+[ -n "$MQTT_USERNAME" ] && MQTT_CLI_ARGS="${MQTT_CLI_ARGS} -u ${MQTT_USERNAME} -P ${MQTT_PASSWORD}"
+[ "$MQTT_SSL" = "true" ] && MQTT_CLI_ARGS="${MQTT_CLI_ARGS} --capath /etc/ssl/certs"
+
 # Construct MQTT URI
 if [ -z "$MQTT_USERNAME" ]; then
     if [ "$MQTT_SSL" = "true" ]; then
@@ -84,8 +94,9 @@ bashio::log.info "Starting: ${CMD}"
 WATCHDOG_PORT=8099
 bashio::log.info "Starting internal watchdog on port ${WATCHDOG_PORT}"
 
-# Initialize CURRENT_BRIDGE_PID to prevent unbound variable error
+# Initialize PIDs to prevent unbound variable errors
 CURRENT_BRIDGE_PID=""
+MQTT_LISTENER_PID=""
 
 # Start watchdog HTTP server in background
 (
@@ -103,6 +114,76 @@ CURRENT_BRIDGE_PID=""
 ) &
 WATCHDOG_PID=$!
 bashio::log.info "Internal watchdog started (PID: ${WATCHDOG_PID})"
+
+# -------------------------------------------------------------------
+# mqtt_listener_loop
+# Subscribes to all MQTT topics and persists the last value of any
+# "set" topic (path segment IS "set" or starts with "set_"/"set/").
+# These are the writable command topics aurora_mqtt_bridge listens on.
+# Runs forever in the background; reconnects automatically after broker
+# disconnects.  Written to STATE_DIR so replay_mqtt_commands can read
+# them after a bridge crash.
+# -------------------------------------------------------------------
+mqtt_listener_loop() {
+    bashio::log.info "MQTT command listener starting (broker: ${MQTT_HOST}:${MQTT_PORT})..."
+    while true; do
+        # shellcheck disable=SC2086
+        mosquitto_sub ${MQTT_CLI_ARGS} -v -t '#' 2>/dev/null | \
+        while IFS= read -r line; do
+            # mosquitto_sub -v outputs: "<topic> <payload>" on one line.
+            # MQTT topics cannot contain spaces, so splitting on the first
+            # space is safe even when the payload contains spaces.
+            topic="${line%% *}"
+            payload="${line#"${topic}"}"
+            payload="${payload# }"  # strip the single leading space
+            # Match topics whose last (or only) path segment is "set",
+            # starts with "set_", or starts with "set/".
+            if echo "$topic" | grep -qE '(^|/)set([/_]|$)'; then
+                safe_name=$(printf '%s' "$topic" | tr '/' '__' | tr -cs 'A-Za-z0-9._-' '_')
+                printf '%s' "$payload" > "${STATE_DIR}/${safe_name}.val"
+                printf '%s' "$topic"   > "${STATE_DIR}/${safe_name}.topic"
+                bashio::log.debug "Tracked MQTT command: ${topic} = ${payload}"
+            fi
+        done
+        # mosquitto_sub exited (broker disconnect / auth error).
+        # Wait briefly before reconnecting to avoid spinning.
+        sleep 5
+    done
+}
+
+# -------------------------------------------------------------------
+# replay_mqtt_commands
+# Re-publishes every tracked "set" command with the retain flag so
+# the bridge receives it immediately upon (re-)subscription, even if
+# there is a brief timing gap between our publish and its subscribe.
+# Call this a few seconds after a bridge restart.
+# -------------------------------------------------------------------
+replay_mqtt_commands() {
+    local count=0
+    for val_file in "${STATE_DIR}"/*.val; do
+        [ -f "$val_file" ] || continue
+        topic_file="${val_file%.val}.topic"
+        [ -f "$topic_file" ] || continue
+        local topic payload
+        topic=$(cat "$topic_file")
+        payload=$(cat "$val_file")
+        bashio::log.info "Replaying MQTT command: ${topic} = ${payload}"
+        # shellcheck disable=SC2086
+        mosquitto_pub ${MQTT_CLI_ARGS} -r -t "$topic" -m "$payload" 2>/dev/null || \
+            bashio::log.warning "Failed to replay command on topic: ${topic}"
+        count=$((count + 1))
+    done
+    if [ "$count" -gt 0 ]; then
+        bashio::log.info "Replayed ${count} MQTT command(s) after bridge restart"
+    else
+        bashio::log.debug "No MQTT commands to replay"
+    fi
+}
+
+# Start MQTT command listener in the background
+mqtt_listener_loop &
+MQTT_LISTENER_PID=$!
+bashio::log.info "MQTT command listener started (PID: ${MQTT_LISTENER_PID})"
 
 # Disable Ruby warnings but ensure stdout/stderr are unbuffered for real-time logs
 export RUBYOPT="-W0"
@@ -170,24 +251,33 @@ fi
 # Log environment variables that affect output
 bashio::log.debug "Environment: RUBYOPT=${RUBYOPT}, RUBY_IO_SYNC=${RUBY_IO_SYNC}"
 
-# Automatic reconnection with exponential backoff
+# Automatic reconnection loop.
+# The dominant failure is a TCP idle-timeout reset from the serial bridge
+# (every ~300 s of inactivity).  For the first 3 consecutive failures we
+# use a short 2-second fixed delay so the bridge comes back almost
+# instantly.  Only after 3 consecutive failures do we apply exponential
+# backoff (30 s, 60 s, 120 s … up to 300 s) to avoid hammering a
+# genuinely broken connection.
 RETRY_COUNT=0
 MAX_RETRY_DELAY=300  # Maximum 5 minutes between retries
-INITIAL_RETRY_DELAY=5  # Start with 5 seconds
 CONSECUTIVE_FAILURES=0  # Track consecutive failures for backoff
 
 while true; do
-    # Apply exponential backoff before retry (except first attempt)
-    if [ $CONSECUTIVE_FAILURES -gt 0 ]; then
-        # Calculate exponential backoff delay (doubles each time, up to max)
-        RETRY_DELAY=$((INITIAL_RETRY_DELAY * (2 ** (CONSECUTIVE_FAILURES - 1))))
-        if [ $RETRY_DELAY -gt $MAX_RETRY_DELAY ]; then
-            RETRY_DELAY=$MAX_RETRY_DELAY
+    # Apply restart delay (skipped on the very first start)
+    if [ "$CONSECUTIVE_FAILURES" -gt 0 ]; then
+        if [ "$CONSECUTIVE_FAILURES" -le 3 ]; then
+            # Short fixed delay: almost certainly a TCP idle-timeout reset.
+            RETRY_DELAY=2
+            bashio::log.info "Bridge disconnected (failure ${CONSECUTIVE_FAILURES}); restarting in ${RETRY_DELAY}s..."
+        else
+            # Exponential backoff for persistent failures: 30 s, 60 s, 120 s … 300 s
+            RETRY_DELAY=$((30 * (2 ** (CONSECUTIVE_FAILURES - 4))))
+            if [ "$RETRY_DELAY" -gt "$MAX_RETRY_DELAY" ]; then
+                RETRY_DELAY=$MAX_RETRY_DELAY
+            fi
+            bashio::log.warning "Persistent failure (${CONSECUTIVE_FAILURES} consecutive). Waiting ${RETRY_DELAY}s before retry #$((RETRY_COUNT + 1))..."
         fi
-        
-        bashio::log.warning "Connection lost. Waiting ${RETRY_DELAY} seconds before retry attempt #$((RETRY_COUNT + 1))..."
-        bashio::log.info "Consecutive failures: ${CONSECUTIVE_FAILURES}, Total attempts: ${RETRY_COUNT}"
-        sleep $RETRY_DELAY
+        sleep "$RETRY_DELAY"
     fi
     
     RETRY_COUNT=$((RETRY_COUNT + 1))
@@ -218,15 +308,24 @@ while true; do
     BRIDGE_PID=$!
     CURRENT_BRIDGE_PID=$BRIDGE_PID  # Make available to watchdog
     
-    # Wait a moment to see if it starts successfully
-    sleep 5
-    
+    # Brief pause to detect immediate crashes before declaring success.
+    sleep 2
+
     # Check if process is still running
     if kill -0 $BRIDGE_PID 2>/dev/null; then
         bashio::log.info "Bridge process started successfully (PID: ${BRIDGE_PID}, attempt #${RETRY_COUNT})"
         # Reset consecutive failures on successful start
         CONSECUTIVE_FAILURES=0
-        
+
+        # After a restart, replay the last-known MQTT set commands so any
+        # in-flight write that was interrupted by the crash is not silently
+        # lost.  We wait 8 s to give the bridge time to connect and
+        # subscribe before we publish.  Runs in a subshell so it does not
+        # block the wait below.
+        if [ "$RETRY_COUNT" -gt 1 ]; then
+            (sleep 8 && replay_mqtt_commands) &
+        fi
+
         # Wait for the process to complete
         wait $BRIDGE_PID
         EXIT_CODE=$?
@@ -261,6 +360,12 @@ bashio::log.info "Shutting down..."
 if [ -n "$WATCHDOG_PID" ] && kill -0 $WATCHDOG_PID 2>/dev/null; then
     bashio::log.info "Stopping internal watchdog..."
     kill $WATCHDOG_PID 2>/dev/null || true
+fi
+
+# Stop MQTT command listener
+if [ -n "$MQTT_LISTENER_PID" ] && kill -0 $MQTT_LISTENER_PID 2>/dev/null; then
+    bashio::log.info "Stopping MQTT command listener..."
+    kill $MQTT_LISTENER_PID 2>/dev/null || true
 fi
 
 # Stop tcpdump if it was started
